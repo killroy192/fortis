@@ -1,7 +1,7 @@
 {
-  "name": "foundry-starter-kit",
-  "version": "1.0.0",
-  "description": "Minimal Template for Foundry Projects",
+  "name": "fortis-sdk",
+  "version": "0.0.1",
+  "description": "SDK for Data Stream ChainLink Oracle backed by Data Feeds",
   "author": "Patrick Collins",
   "license": "MIT",
   "files": [
