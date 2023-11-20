@@ -18,11 +18,11 @@
   "lint-staged": {
     "src/**/*.sol": [
       "prettier --write",
-      "solhint --fix"
+      "solhint"
     ],
     "script/**/*.sol": [
       "prettier --write",
-      "solhint --fix"
+      "solhint"
     ]
   },
   "dependencies": {

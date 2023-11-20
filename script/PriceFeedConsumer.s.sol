@@ -7,8 +7,8 @@ import {HelperConfig} from "./HelperConfig.sol";
 import {MockV3Aggregator} from "../src/test/mocks/MockV3Aggregator.sol";
 
 contract DeployPriceFeedConsumer is Script, HelperConfig {
-    uint8 constant public DECIMALS = 18;
-    int256 constant public INITIAL_ANSWER = 2000e18;
+    uint8 public constant DECIMALS = 18;
+    int256 public constant INITIAL_ANSWER = 2000e18;
 
     function run() external {
         HelperConfig helperConfig = new HelperConfig();
