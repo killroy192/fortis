@@ -14,7 +14,6 @@
   "bugs": {
     "url": "https://github.com/killroy192/fortis-sdk/issues"
   },
-  "scripts": {},
   "lint-staged": {
     "src/**/*.sol": [
       "prettier --write",

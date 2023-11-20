@@ -8,6 +8,7 @@ broadcast/
 
 node_modules
 package-lock.json
+.yarn
 
 .DS_Store
 src/.DS_Store

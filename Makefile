@@ -5,12 +5,12 @@
 all: clean remove install update build
 
 # Clean the repo
-clean  :; forge clean
+clean :; forge clean
 
 # Remove modules
-remove :; rm -rf .gitmodules && rm -rf .git/modules/* && rm -rf lib && touch .gitmodules && git add . && git commit -m "modules"
+remove :; rm -rf .gitmodules && rm -rf .git/modules/* && rm -rf lib && touch .gitmodules
 
-install :; yarn && npx husky install && forge install foundry-rs/forge-std
+install :; forge install foundry-rs/forge-std && yarn && npx husky install
 
 # Update Dependencies
 update:; forge update
