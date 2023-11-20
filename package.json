@@ -23,13 +23,5 @@
   "bugs": {
     "url": "https://github.com/smartcontractkit/foundry-starter-kit/issues"
   },
-  "scripts": {
-    "setup": "make",
-    "sync": "make update",
-    "test": "make test",
-    "snapshot": "make snapshot",
-    "format": "make format",
-    "lint": "make lint",
-    "all": "make all"
-  }
+  "scripts": {}
 }
