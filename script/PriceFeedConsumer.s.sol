@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.7;
 
-import "forge-std/Script.sol";
-import "../src/PriceFeedConsumer.sol";
-import "./HelperConfig.sol";
-import "../src/test/mocks/MockV3Aggregator.sol";
+import {Script} from "forge-std/Script.sol";
+import {PriceFeedConsumer} from "../src/PriceFeedConsumer.sol";
+import {HelperConfig} from "./HelperConfig.sol";
+import {MockV3Aggregator} from "../src/test/mocks/MockV3Aggregator.sol";
 
 contract DeployPriceFeedConsumer is Script, HelperConfig {
-    uint8 constant DECIMALS = 18;
-    int256 constant INITIAL_ANSWER = 2000e18;
+    uint8 constant public DECIMALS = 18;
+    int256 constant public INITIAL_ANSWER = 2000e18;
 
     function run() external {
         HelperConfig helperConfig = new HelperConfig();

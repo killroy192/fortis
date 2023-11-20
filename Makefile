@@ -23,9 +23,9 @@ snapshot :; forge snapshot
 
 slither :; slither ./src 
 
-format :; prettier --write src/**/*.sol && prettier --write src/*.sol
+format :; prettier --write src/**/*.sol && prettier --write src/**/*.sol
 
-lint :; solhint src/**/*.sol && solhint src/*.sol
+lint :; solhint src/**/*.sol && solhint script/**/*.sol
 
 anvil :; anvil -m 'test test test test test test test test test test test junk'
 

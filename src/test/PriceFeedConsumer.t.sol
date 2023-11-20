@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.0;
 
-import "../PriceFeedConsumer.sol";
-import "./mocks/MockV3Aggregator.sol";
-import "forge-std/Test.sol";
+import {PriceFeedConsumer} from "../PriceFeedConsumer.sol";
+import {MockV3Aggregator} from "./mocks/MockV3Aggregator.sol";
+import {Test} from "forge-std/Test.sol";
 
 contract PriceFeedConsumerTest is Test {
     uint8 public constant DECIMALS = 18;

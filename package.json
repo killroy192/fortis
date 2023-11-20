@@ -7,6 +7,28 @@
   "files": [
     "src/**/*.sol"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/killroy192/fortis-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/killroy192/fortis-sdk/issues"
+  },
+  "scripts": {},
+  "lint-staged": {
+    "src/**/*.sol": [
+      "prettier --write",
+      "solhint --fix"
+    ],
+    "script/**/*.sol": [
+      "prettier --write",
+      "solhint --fix"
+    ]
+  },
+  "dependencies": {
+    "@chainlink/contracts": "^0.8.0",
+    "@openzeppelin/contracts": "^5.0.0"
+  },
   "devDependencies": {
     "husky": "^8.0.3",
     "lint-staged": "^15.1.0",
@@ -15,13 +37,5 @@
     "prettier-plugin-solidity": "^1.2.0",
     "solhint": "^4.0.0",
     "solhint-plugin-prettier": "^0.1.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/smartcontractkit/foundry-starter-kit.git"
-  },
-  "bugs": {
-    "url": "https://github.com/smartcontractkit/foundry-starter-kit/issues"
-  },
-  "scripts": {}
+  }
 }
