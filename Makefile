@@ -2,18 +2,17 @@
 
 .PHONY: all test clean deploy-anvil
 
-all: clean remove install update build
+all: clean install update build
 
 # Clean the repo
 clean :; forge clean
 
 # Remove modules
-remove :; rm -rf .gitmodules && rm -rf .git/modules/* && rm -rf lib && touch .gitmodules
 
-install :; forge install foundry-rs/forge-std && yarn && npx husky install
+install :; rm -rf lib && forge install --no-commit --no-git foundry-rs/forge-std && yarn && npx husky install
 
 # Update Dependencies
-update:; forge update
+update:; forge update && yarn
 
 build:; forge build
 

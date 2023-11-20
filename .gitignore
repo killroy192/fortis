@@ -9,6 +9,7 @@ broadcast/
 node_modules
 package-lock.json
 .yarn
+lib
 
 .DS_Store
 src/.DS_Store
