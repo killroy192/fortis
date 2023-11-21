@@ -8,6 +8,7 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/Ag
  * @notice Acontract that returns latest price from Chainlink Price Feeds
  */
 contract PriceFeedConsumer {
+    // solhint-disable-next-line var-name-mixedcase
     AggregatorV3Interface internal immutable PRICE_FEED;
 
     constructor(address _priceFeed) {

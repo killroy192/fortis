@@ -15,7 +15,7 @@
     "url": "https://github.com/killroy192/fortis-sdk/issues"
   },
   "lint-staged": {
-    "contracts/**/*.sol": [
+    "src/**/*.sol": [
       "prettier --write",
       "solhint"
     ],

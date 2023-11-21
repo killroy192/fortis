@@ -46,7 +46,7 @@ const deployOnlyChanged =
       return deploymentLock;
     }
 
-    const deployment = await deployer.deploy(args);
+    const deployment = await deployer.deploy(...args);
 
     await deployment.waitForDeployment();
 
@@ -70,8 +70,8 @@ module.exports = async function main() {
     );
 
     const deploymentResult = await deployOnlyChanged({
-      contractName: "PriceFeedConsumer",
-      args: [hre.ethers.Wallet.createRandom().address]
+      contractName: "Test",
+      args: [hre.ethers.ZeroAddress, hre.ethers.ZeroAddress]
     })(currentDeploymentLock[networkName]);
 
     console.log(`Deployment to ${networkName} has finished, update lock file`);

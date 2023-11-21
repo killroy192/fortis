@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import {PriceFeedConsumer} from "../contracts/PriceFeedConsumer.sol";
+import {PriceFeedConsumer} from "../src/PriceFeedConsumer.sol";
 import {MockV3Aggregator} from "./mocks/MockV3Aggregator.sol";
 import {Test} from "forge-std/Test.sol";
 

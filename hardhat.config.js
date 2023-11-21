@@ -22,7 +22,7 @@ module.exports = {
   },
   paths: {
     sources: "./src",
-    tests: "./integration",
+    tests: "./e2e",
   },
   networks: {
     sepolia: {

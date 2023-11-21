@@ -20,15 +20,15 @@ hh-build :; npx hardhat compile
 
 test :; forge test
 
-integration :; npx hardhat run test
+test-e2e :; npx hardhat test
 
 snapshot :; forge snapshot
 
 slither :; slither ./contracts 
 
-format :; npx prettier --write contracts/**/*.sol && npx prettier --write test/**/*.sol
+format :; npx prettier --write src/**/*.sol && npx prettier --write test/**/*.sol
 
-lint :; npx solhint contracts/**/*.sol && npx solhint test/**/*.sol
+lint :; npx solhint src/**/*.sol && npx solhint test/**/*.sol
 
 anvil :; anvil -m 'test test test test test test test test test test test junk'
 
