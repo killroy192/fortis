@@ -2,21 +2,21 @@
 
 .PHONY: all test clean deploy-anvil
 
-all: clean install update build
+all: clean install forge-update forge-build hh-build test
 
 # Clean the repo
 clean :; forge clean
 
 # Remove modules
 
-install :; rm -rf lib && forge install --no-commit --no-git foundry-rs/forge-std && yarn && npx husky install
+install :; rm -rf lib && forge install --no-commit --no-git foundry-rs/forge-std && npm i && npx husky install
 
 # Update Dependencies
-update:; forge update && yarn
+forge-update:; forge update
 
 forge-build:; forge build
 
-hh-build :; npx hardhat run deployment
+hh-build :; npx hardhat compile
 
 test :; forge test
 

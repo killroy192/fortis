@@ -21,6 +21,7 @@ module.exports = {
     },
   },
   paths: {
+    sources: "./src",
     tests: "./integration",
   },
   networks: {

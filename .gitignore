@@ -1,5 +1,7 @@
 cache/
 out/
+cache_hardhat/
+artifacts/
 .gas-snapshot
 .vscode/
 .env
