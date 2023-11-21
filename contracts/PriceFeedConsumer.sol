@@ -8,10 +8,10 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/Ag
  * @notice Acontract that returns latest price from Chainlink Price Feeds
  */
 contract PriceFeedConsumer {
-    AggregatorV3Interface internal immutable priceFeed;
+    AggregatorV3Interface internal immutable PRICE_FEED;
 
     constructor(address _priceFeed) {
-        priceFeed = AggregatorV3Interface(_priceFeed);
+        PRICE_FEED = AggregatorV3Interface(_priceFeed);
     }
 
     /**
@@ -27,8 +27,7 @@ contract PriceFeedConsumer {
             ,
             ,
 
-        ) = /* uint80 answeredInRound */
-            priceFeed.latestRoundData();
+        ) = PRICE_FEED.latestRoundData(); /* uint80 answeredInRound */
         return price;
     }
 
@@ -38,6 +37,6 @@ contract PriceFeedConsumer {
      * @return Price Feed address
      */
     function getPriceFeed() public view returns (AggregatorV3Interface) {
-        return priceFeed;
+        return PRICE_FEED;
     }
 }

@@ -15,14 +15,16 @@
     "url": "https://github.com/killroy192/fortis-sdk/issues"
   },
   "lint-staged": {
-    "src/**/*.sol": [
+    "contracts/**/*.sol": [
       "prettier --write",
       "solhint"
     ],
-    "script/**/*.sol": [
+    "test/**/*.sol": [
       "prettier --write",
       "solhint"
-    ]
+    ],
+    "integration/**/*.js": "prettier --write",
+    "deployment-lock.json": "prettier --write"
   },
   "dependencies": {
     "@chainlink/contracts": "^0.8.0",
