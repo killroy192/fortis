@@ -33,7 +33,7 @@ const deployOnlyChanged =
       ...getLibrariesDynamically(deploymentLock, deployerOptions?.dynamicLibs),
     };
 
-    console.log("done", deployerOptions.libraries);
+    console.log("done", deployerOptions, args);
 
     console.log("Try deploy contract...", contractName);
     const deployer = await hre.ethers.getContractFactory(
@@ -71,7 +71,7 @@ module.exports = async function main() {
 
     const deploymentResult = await deployOnlyChanged({
       contractName: "PriceFeedConsumer",
-      args: [hre.ethers.ZeroAddress]
+      args: [hre.ethers.Wallet.createRandom().address]
     })(currentDeploymentLock[networkName]);
 
     console.log(`Deployment to ${networkName} has finished, update lock file`);
