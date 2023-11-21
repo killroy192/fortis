@@ -1,9 +1,10 @@
 {
-    "filter_paths": "lib",
+    "filter_paths": ["lib", "test"],
     "solc_remaps": [
       "ds-test/=lib/ds-test/src/",
       "forge-std/=lib/forge-std/src/",
-      "@chainlink/=lib/chainlink-brownie-contracts/"
+      "@chainlink/=lib/chainlink-brownie-contracts/",
+      "@openzeppelin/=node_modules/@openzeppelin/"
     ]
   }
   

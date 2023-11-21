@@ -1,6 +1,7 @@
 const fsp = require("node:fs/promises");
 const fs = require("node:fs");
 const path = require("node:path");
+const hre = require("hardhat");
 
 const loggedNetworks = ["sepolia", "anvil"];
 
@@ -35,7 +36,7 @@ const deployOnlyChanged =
     console.log("done", deployerOptions.libraries);
 
     console.log("Try deploy contract...", contractName);
-    const deployer = await ethers.getContractFactory(
+    const deployer = await hre.ethers.getContractFactory(
       contractName,
       deployerOptions
     );
@@ -69,7 +70,8 @@ module.exports = async function main() {
     );
 
     const deploymentResult = await deployOnlyChanged({
-      contractName: "FundsVestingLib",
+      contractName: "PriceFeedConsumer",
+      args: [hre.ethers.ZeroAddress]
     })(currentDeploymentLock[networkName]);
 
     console.log(`Deployment to ${networkName} has finished, update lock file`);

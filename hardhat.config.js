@@ -1,6 +1,6 @@
 const config = require('dotenv').config();
 
-// require('@nomicfoundation/hardhat-toolbox');
+require('@nomicfoundation/hardhat-toolbox');
 require("@nomicfoundation/hardhat-foundry");
 
 if (config.error) {
