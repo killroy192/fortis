@@ -53,7 +53,7 @@ contract StreamsUpkeep is ILogAutomation, IStreamsLookupCompatible {
     event ReportVerified(BasicReport indexed report);
     event PriceUpdate(int192 price);
 
-    address public immutable FEE_ADDRESS;
+    address public immutable feeAddress;
     string public constant STRING_DATASTREAMS_FEEDLABEL = "feedIDs";
     string public constant STRING_DATASTREAMS_QUERYLABEL = "timestamp";
     string[] public feedsHex = [
@@ -61,8 +61,8 @@ contract StreamsUpkeep is ILogAutomation, IStreamsLookupCompatible {
     ];
 
     constructor(address _feeAddress, address _verifier) {
-        verifier = IVerifierProxy(_verifier); //0xea9B98Be000FBEA7f6e88D08ebe70EbaAD10224c
-        FEE_ADDRESS = _feeAddress; // 0xe39Ab88f8A4777030A534146A9Ca3B52bd5D43A3 (WETH)
+        verifier = IVerifierProxy(_verifier); // 0xea9B98Be000FBEA7f6e88D08ebe70EbaAD10224c
+        feeAddress = _feeAddress; // 0xe39Ab88f8A4777030A534146A9Ca3B52bd5D43A3 (WETH)
     }
 
     function checkLog(
@@ -116,7 +116,7 @@ contract StreamsUpkeep is ILogAutomation, IStreamsLookupCompatible {
         bytes memory report
     ) internal view returns (bytes memory) {
         Quote memory quote;
-        quote.quoteAddress = FEE_ADDRESS;
+        quote.quoteAddress = feeAddress;
         (
             bytes32[3] memory reportContext,
             bytes memory reportData,

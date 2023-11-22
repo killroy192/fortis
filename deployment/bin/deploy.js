@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const hre = require("hardhat");
 
-const loggedNetworks = ["sepolia", "anvil"];
+const loggedNetworks = ["sepolia", "arbitrum-sepolia"];
 
 const getDeploymentLockData = async (networkName, filePath) => {
   const isExist = fs.existsSync(filePath);
@@ -38,7 +38,7 @@ const deployOnlyChanged =
     console.log("Try deploy contract...", contractName);
     const deployer = await hre.ethers.getContractFactory(
       contractName,
-      deployerOptions
+      deployerOptions,
     );
 
     if (deployer.bytecode === deploymentLock[contractName]?.code) {
@@ -66,13 +66,18 @@ module.exports = async function main() {
 
     const currentDeploymentLock = await getDeploymentLockData(
       networkName,
-      filePath
+      filePath,
     );
 
     const deploymentResult = await deployOnlyChanged({
-      contractName: "Test",
-      args: [hre.ethers.ZeroAddress, hre.ethers.ZeroAddress]
-    })(currentDeploymentLock[networkName]);
+      contractName: "StreamsUpkeep",
+      args: [
+        "0xe39Ab88f8A4777030A534146A9Ca3B52bd5D43A3",
+        "0xea9B98Be000FBEA7f6e88D08ebe70EbaAD10224c",
+      ],
+    })(currentDeploymentLock[networkName]).then(
+      deployOnlyChanged({ contractName: "Emitter" }),
+    );
 
     console.log(`Deployment to ${networkName} has finished, update lock file`);
 
@@ -82,7 +87,7 @@ module.exports = async function main() {
         JSON.stringify({
           ...currentDeploymentLock,
           [networkName]: deploymentResult,
-        })
+        }),
       );
     }
     console.log("Done");

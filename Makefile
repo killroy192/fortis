@@ -32,7 +32,9 @@ lint :; npx solhint src/**/*.sol && npx solhint test/**/*.sol
 
 anvil :; anvil -m 'test test test test test test test test test test test junk'
 
-hhnode :; npx hardhat node
+hh-node :; npx hardhat node
+
+deploy-arbitrum-sepolia :; npx hardhat run --network arbitrum-sepolia deployment
 
 deploy-sepolia :; npx hardhat run --network sepolia deployment
 

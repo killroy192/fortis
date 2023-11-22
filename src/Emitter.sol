@@ -7,14 +7,14 @@ import {IAutomationRequestsStore} from "./interfaces/IAutomationRequestsStore.so
 contract Emitter {
     event AutomationTrigger(address indexed msgSender);
 
-    address public immutable requestStore;
+    // address public immutable requestStore;
 
-    constructor(address _requestStore) {
-        requestStore = _requestStore;
-    }
+    // constructor(address _requestStore) {
+    //     requestStore = _requestStore;
+    // }
 
     function emitRequest() external {
-        IAutomationRequestsStore(requestStore).addRequest(msg.sender);
+        // IAutomationRequestsStore(requestStore).addRequest(msg.sender);
         emit AutomationTrigger(msg.sender);
     }
 }

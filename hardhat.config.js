@@ -32,6 +32,10 @@ module.exports = {
     anvil: {
       url: config?.parsed?.RPC_URL || "https:random.com",
       accounts: ["0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"],
+    },
+    "arbitrum-sepolia": {
+      url: config?.parsed?.ARBITRUM_SEPOLIA_RPC || "https:random.com",
+      accounts: deployerAccounts,
     }
   },
 };
