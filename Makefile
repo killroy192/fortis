@@ -34,6 +34,8 @@ anvil :; anvil -m 'test test test test test test test test test test test junk'
 
 hh-node :; npx hardhat node
 
+abi :; npx hardhat export-abi
+
 deploy-arbitrum-sepolia :; npx hardhat run --network arbitrum-sepolia deployment
 
 deploy-sepolia :; npx hardhat run --network sepolia deployment

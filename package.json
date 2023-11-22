@@ -28,7 +28,8 @@
   },
   "dependencies": {
     "@chainlink/contracts": "^0.8.0",
-    "@openzeppelin/contracts": "^5.0.0"
+    "@openzeppelin/contracts": "^5.0.0",
+    "hardhat-abi-exporter": "^2.10.1"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",

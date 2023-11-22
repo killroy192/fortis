@@ -2,6 +2,7 @@ const config = require('dotenv').config();
 
 require('@nomicfoundation/hardhat-toolbox');
 require("@nomicfoundation/hardhat-foundry");
+require('hardhat-abi-exporter');
 
 if (config.error) {
   console.error(config.error);
