@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity >=0.8.19;
+pragma solidity ^0.8.16;
 
 import {IAutomationRequestsStore} from "./interfaces/IAutomationRequestsStore.sol";
 

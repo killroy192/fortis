@@ -5,10 +5,12 @@ const hre = require("hardhat");
 
 const loggedNetworks = ["sepolia", "arbitrum-sepolia"];
 
-const getDeploymentLockData = async (networkName, filePath) => {
+const isLoggedNetwork = () => loggedNetworks.includes(hre.network.name);
+
+const getDeploymentLockData = async (filePath) => {
   const isExist = fs.existsSync(filePath);
   // skip localhost & one-time deployments
-  return isExist && loggedNetworks.includes(networkName)
+  return isExist && isLoggedNetwork()
     ? JSON.parse(await fsp.readFile(filePath))
     : {};
 };
@@ -54,12 +56,14 @@ const deployOnlyChanged =
 
     console.log("Contract deployed, address:", contractAddress);
 
-    console.log("verify newly deployed contract...");
+    if (isLoggedNetwork()) {
+      console.log("verify newly deployed contract...");
 
-    await hre.run("verify:verify", {
-      address: contractAddress,
-      constructorArguments: args,
-    });
+      await hre.run("verify:verify", {
+        address: contractAddress,
+        constructorArguments: args,
+      });
+    }
 
     console.log('done!')
 
@@ -75,15 +79,13 @@ module.exports = async function main() {
     const filePath = path.resolve("deployment-lock.json");
 
     const currentDeploymentLock = await getDeploymentLockData(
-      networkName,
       filePath,
     );
 
     const deploymentResult = await deployOnlyChanged({
       contractName: "StreamsUpkeep",
       args: [
-        "0xe39Ab88f8A4777030A534146A9Ca3B52bd5D43A3",
-        "0xea9B98Be000FBEA7f6e88D08ebe70EbaAD10224c",
+        "0x2ff010DEbC1297f19579B4246cad07bd24F2488A",
       ],
     })(currentDeploymentLock[networkName]).then(
       deployOnlyChanged({ contractName: "Emitter" }),
