@@ -36,6 +36,8 @@ hh-node :; npx hardhat node
 
 abi :; npx hardhat export-abi
 
+deploy :; npx hardhat run deployment
+
 deploy-arbitrum-sepolia :; npx hardhat run --network arbitrum-sepolia deployment
 
 deploy-sepolia :; npx hardhat run --network sepolia deployment

@@ -50,12 +50,22 @@ const deployOnlyChanged =
 
     await deployment.waitForDeployment();
 
-    const addr = await deployment.getAddress();
+    const contractAddress = await deployment.getAddress();
 
-    console.log("Contract deployed, address:", addr);
+    console.log("Contract deployed, address:", contractAddress);
+
+    console.log("verify newly deployed contract...");
+
+    await hre.run("verify:verify", {
+      address: contractAddress,
+      constructorArguments: args,
+    });
+
+    console.log('done!')
+
     return {
       ...deploymentLock,
-      [contractName]: { addr, code: deployer.bytecode },
+      [contractName]: { addr: contractAddress, code: deployer.bytecode },
     };
   };
 

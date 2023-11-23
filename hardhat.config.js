@@ -39,4 +39,19 @@ module.exports = {
       accounts: deployerAccounts,
     }
   },
+  etherscan: {
+    apiKey: {
+      "arbitrum-sepolia": config?.parsed?.ABISCAN_API_KEY
+    },
+    customChains: [
+      {
+        network: "arbitrum-sepolia",
+        chainId: 421614,
+        urls: {
+          apiURL: "https://api-sepolia.arbiscan.io/api",
+          browserURL: "https://sepolia-explorer.arbitrum.io"
+        }
+      }
+    ]
+  }
 };
