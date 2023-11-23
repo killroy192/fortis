@@ -14,8 +14,6 @@
       "error",
       8
     ],
-    "const-name-snakecase": "off",
-    "immutable-vars-naming": "off",
     "constructor-syntax": "error",
     "func-visibility": [
       "error",

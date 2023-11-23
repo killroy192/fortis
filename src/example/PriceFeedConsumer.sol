@@ -8,7 +8,6 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/Ag
  * @notice Acontract that returns latest price from Chainlink Price Feeds
  */
 contract PriceFeedConsumer {
-    // solhint-disable-next-line var-name-mixedcase
     AggregatorV3Interface internal immutable PRICE_FEED;
 
     constructor(address _priceFeed) {
@@ -20,7 +19,7 @@ contract PriceFeedConsumer {
      *
      * @return latest price
      */
-    function getLatestPrice() public view returns (int256) {
+    function getLatestPrice() internal view returns (int256) {
         (
             ,
             /* uint80 roundID */
@@ -30,14 +29,5 @@ contract PriceFeedConsumer {
 
         ) = PRICE_FEED.latestRoundData(); /* uint80 answeredInRound */
         return price;
-    }
-
-    /**
-     * @notice Returns the Price Feed address
-     *
-     * @return Price Feed address
-     */
-    function getPriceFeed() public view returns (AggregatorV3Interface) {
-        return PRICE_FEED;
     }
 }
