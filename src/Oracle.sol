@@ -10,7 +10,7 @@ import {IERC20} from "./interfaces/IERC20.sol";
 import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
 import {IFeeManager} from "./interfaces/IFeeManager.sol";
 import {IEmitter} from "./interfaces/IEmitter.sol";
-import {IOracleConsumerContract, ForwardData} from "./interfaces/IOracleCallBackContract.sol";
+import {IOracleConsumerContract, ForwardData, FeedType} from "./interfaces/IOracleCallBackContract.sol";
 import {IRequestsManager} from "./interfaces/IRequestsManager.sol";
 
 import {DataStreamConsumer} from "./DataStreamConsumer.sol";
@@ -98,8 +98,8 @@ contract Oracle is
         // solhint-disable-next-line avoid-low-level-calls
         IOracleConsumerContract(callBackContract).consume(
             ForwardData({
-                price: report.price,
-                feedType: "DataStream",
+                price: int256(int192(report.price)),
+                feedType: FeedType.DataStream,
                 forwardArguments: callBackArgs
             })
         );
@@ -110,12 +110,12 @@ contract Oracle is
         GenericRequest memory request,
         bytes32 id
     ) external fallbackExecutionAllowed(id) {
-        uint256 price = getLatestPrice();
+        int256 price = getLatestPrice();
         // solhint-disable-next-line avoid-low-level-calls
         IOracleConsumerContract(request.callBackContract).consume(
             ForwardData({
                 price: price,
-                feedType: "PriceFeed",
+                feedType: FeedType.PriceFeed,
                 forwardArguments: request.callBackArgs
             })
         );
