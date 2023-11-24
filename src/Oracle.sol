@@ -10,17 +10,13 @@ import {IERC20} from "./interfaces/IERC20.sol";
 import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
 import {IFeeManager} from "./interfaces/IFeeManager.sol";
 import {IEmitter} from "./interfaces/IEmitter.sol";
+import {IOracleConsumerContract, ForwardData} from "./interfaces/IOracleCallBackContract.sol";
+import {IRequestsManager} from "./interfaces/IRequestsManager.sol";
 
 import {DataStreamConsumer} from "./DataStreamConsumer.sol";
 import {GaranteedExecution} from "./GaranteedExecution.sol";
 import {PriceFeedConsumer} from "./PriceFeedConsumer.sol";
 import {RequestsManager} from "./RequestsManager.sol";
-
-struct ForwardRequestExecution {
-    uint256 price;
-    string feedType;
-    bytes forwardArguments;
-}
 
 contract Oracle is
     IEmitter,
@@ -34,7 +30,7 @@ contract Oracle is
     // Find a complete list of IDs and verifiers at https://docs.chain.link/data-streams/stream-ids
     constructor(
         address _verifier,
-        string _dataStreamfeedId,
+        string memory _dataStreamfeedId,
         address _priceFeedId,
         uint256 _requestTimeout
     )
@@ -82,23 +78,26 @@ contract Oracle is
         );
 
         // Decode verified report data into BasicReport struct
-        BasicReport report = abi.decode(verifiedReportData, (BasicReport));
+        BasicReport memory report = abi.decode(
+            verifiedReportData,
+            (BasicReport)
+        );
 
         mainExecution(report, extraData, id);
     }
 
     function mainExecution(
-        BasicReport report,
+        BasicReport memory report,
         bytes memory extraData,
         bytes32 id
     ) private {
-        (address callBackContract, bytes callBackArgs) = abi.decode(
+        (address callBackContract, bytes memory callBackArgs) = abi.decode(
             extraData,
             (GenericRequest)
         );
         // solhint-disable-next-line avoid-low-level-calls
-        callBackContract.call(
-            ForwardRequestExecution({
+        IOracleConsumerContract(callBackContract).consume(
+            ForwardData({
                 price: report.price,
                 feedType: "DataStream",
                 forwardArguments: callBackArgs
@@ -113,8 +112,8 @@ contract Oracle is
     ) external fallbackExecutionAllowed(id) {
         uint256 price = getLatestPrice();
         // solhint-disable-next-line avoid-low-level-calls
-        request.callBackContract.call(
-            ForwardRequestExecution({
+        IOracleConsumerContract(request.callBackContract).consume(
+            ForwardData({
                 price: price,
                 feedType: "PriceFeed",
                 forwardArguments: request.callBackArgs

@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.16;
 
-import {IRequestsManager} from "../interfaces/IRequestsManager.sol";
+import {IRequestsManager} from "./interfaces/IRequestsManager.sol";
 
 abstract contract GaranteedExecution {
     error InvalidRequestsExecution(bytes32 id);
