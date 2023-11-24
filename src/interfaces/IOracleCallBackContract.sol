@@ -8,7 +8,7 @@ enum FeedType {
 }
 
 struct ForwardData {
-    uint256 price;
+    int256 price;
     FeedType feedType;
     bytes forwardArguments;
 }
