@@ -9,21 +9,9 @@ interface IRequestsManager {
         uint256 blockNumber;
     }
 
-    error Unauthorized();
-    error Forbidden();
-
-    function register(address _stremUpKeep, address _emitter) external;
-
-    function unRegister(address _stremUpKeep) external;
-
-    function getEmitter(address _stremUpKeep) external view returns (address);
-
     function addRequest(bytes32 _id) external;
 
-    function fulfillRequest(address _emitter, bytes32 _id) external;
+    function fulfillRequest(bytes32 _id) external;
 
-    function getRequest(
-        address _emitter,
-        bytes32 _id
-    ) external view returns (Request memory);
+    function getRequest(bytes32 _id) external view returns (Request memory);
 }
