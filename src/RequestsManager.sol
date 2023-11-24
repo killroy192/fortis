@@ -12,12 +12,18 @@ contract RequestsManager is IRequestsManager {
     mapping(bytes32 => Request) private _pendingRequests;
 
     function addRequest(bytes32 _id) external {
-        _pendingRequests[_id] = Request({status: 1, blockNumber: block.number});
+        _pendingRequests[_id] = Request({
+            status: IRequestsManager.RequestStatus.Pending,
+            blockNumber: block.number
+        });
         emit RequestAdded(msg.sender, block.number);
     }
 
     function fulfillRequest(bytes32 _id) external {
-        _pendingRequests[_id] = Request({status: 2, blockNumber: block.number});
+        _pendingRequests[_id] = Request({
+            status: IRequestsManager.RequestStatus.Fulfilled,
+            blockNumber: block.number
+        });
         emit RequestFulfilled(msg.sender, block.number);
     }
 

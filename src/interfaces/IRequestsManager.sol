@@ -3,9 +3,14 @@
 pragma solidity ^0.8.16;
 
 interface IRequestsManager {
+    enum RequestStatus {
+        Init,
+        Pending,
+        Fulfilled
+    }
+
     struct Request {
-        // 0 - init, 1 - pending, 2 - closed
-        uint8 status;
+        RequestStatus status;
         uint256 blockNumber;
     }
 

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copy of OpenZeppelin Contracts (last updated v5.0.0) (token/ERC20/IERC20.sol)
+// Decrease sol version
 
 pragma solidity ^0.8.16;
 
