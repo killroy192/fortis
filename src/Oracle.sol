@@ -93,7 +93,7 @@ contract Oracle is
     ) private {
         (address callBackContract, bytes memory callBackArgs) = abi.decode(
             extraData,
-            (GenericRequest)
+            (address, bytes)
         );
         // solhint-disable-next-line avoid-low-level-calls
         IOracleConsumerContract(callBackContract).consume(
@@ -122,7 +122,7 @@ contract Oracle is
         fulfillRequest(id);
     }
 
-    function addRequest(bytes32 _id) internal override {
+    function addRequest(bytes32 _id) internal {
         requestManager.addRequest(_id);
     }
 

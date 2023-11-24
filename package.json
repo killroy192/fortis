@@ -17,11 +17,11 @@
   "lint-staged": {
     "src/**/*.sol": [
       "prettier --write",
-      "solhint"
+      "solhint src/**/*.sol"
     ],
     "test/**/*.sol": [
       "prettier --write",
-      "solhint"
+      "solhint test/**/*.sol"
     ],
     "integration/**/*.js": "prettier --write",
     "deployment-lock.json": "prettier --write"
