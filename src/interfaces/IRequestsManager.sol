@@ -9,7 +9,7 @@ interface IRequestsManager {
         Fulfilled
     }
 
-    struct Request {
+    struct RequestStats {
         RequestStatus status;
         uint256 blockNumber;
     }
@@ -18,5 +18,7 @@ interface IRequestsManager {
 
     function fulfillRequest(bytes32 _id) external;
 
-    function getRequest(bytes32 _id) external view returns (Request memory);
+    function getRequest(
+        bytes32 _id
+    ) external view returns (RequestStats memory);
 }

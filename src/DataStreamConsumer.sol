@@ -74,14 +74,11 @@ abstract contract DataStreamConsumer is
 
         bytes memory unverifiedReport = signedReports[0];
 
-        bytes32 requestId = keccak256(extraData);
-
-        onPerformUpkeep(unverifiedReport, extraData, requestId);
+        verifyAndCall(unverifiedReport, extraData);
     }
 
-    function onPerformUpkeep(
+    function verifyAndCall(
         bytes memory unverifiedReport,
-        bytes memory extraData,
-        bytes32 id
+        bytes memory extraData
     ) internal virtual;
 }

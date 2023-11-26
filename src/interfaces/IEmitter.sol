@@ -2,13 +2,10 @@
 
 pragma solidity ^0.8.16;
 
-interface IEmitter {
-    struct GenericRequest {
-        address callBackContract;
-        bytes callBackArgs;
-    }
+import {Request} from "./Request.sol";
 
+interface IEmitter {
     event AutomationTrigger(bytes32 id);
 
-    function emitRequest(GenericRequest memory request) external;
+    function emitRequest(Request memory request) external;
 }

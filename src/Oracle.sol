@@ -6,6 +6,7 @@ import {Log} from "@chainlink/contracts/src/v0.8/automation/interfaces/ILogAutom
 
 import {IRewardManager} from "@chainlink/contracts/src/v0.8/llo-feeds/interfaces/IRewardManager.sol";
 
+import {Request} from "./interfaces/Request.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
 import {IFeeManager} from "./interfaces/IFeeManager.sol";
@@ -13,19 +14,21 @@ import {IEmitter} from "./interfaces/IEmitter.sol";
 import {IOracleConsumerContract, ForwardData, FeedType} from "./interfaces/IOracleCallBackContract.sol";
 import {IRequestsManager} from "./interfaces/IRequestsManager.sol";
 
+import {RequestLib} from "./libs/RequestLib.sol";
+
 import {DataStreamConsumer} from "./DataStreamConsumer.sol";
-import {GaranteedExecution} from "./GaranteedExecution.sol";
 import {PriceFeedConsumer} from "./PriceFeedConsumer.sol";
 import {RequestsManager} from "./RequestsManager.sol";
 
-contract Oracle is
-    IEmitter,
-    GaranteedExecution,
-    DataStreamConsumer,
-    PriceFeedConsumer
-{
+contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
+    using RequestLib for Request;
+
+    error InvalidRequestsExecution(bytes32 id);
+
     IVerifierProxy public immutable verifier;
     RequestsManager public immutable requestManager;
+    // blocks from request initialization
+    uint256 public immutable requestTimeout;
 
     // Find a complete list of IDs and verifiers at https://docs.chain.link/data-streams/stream-ids
     constructor(
@@ -33,26 +36,41 @@ contract Oracle is
         string memory _dataStreamfeedId,
         address _priceFeedId,
         uint256 _requestTimeout
-    )
-        GaranteedExecution(_requestTimeout)
-        DataStreamConsumer(_dataStreamfeedId)
-        PriceFeedConsumer(_priceFeedId)
-    {
+    ) DataStreamConsumer(_dataStreamfeedId) PriceFeedConsumer(_priceFeedId) {
         verifier = IVerifierProxy(_verifier);
         requestManager = new RequestsManager();
+        requestTimeout = _requestTimeout;
     }
 
-    function emitRequest(GenericRequest memory request) external {
-        bytes32 id = keccak256(abi.encode(request));
-        addRequest(id);
+    function emitRequest(Request memory request) external {
+        bytes32 id = request.generateId();
+        requestManager.addRequest(id);
         emit AutomationTrigger(id);
     }
 
-    function onPerformUpkeep(
+    function verifyAndCall(
         bytes memory unverifiedReport,
-        bytes memory extraData,
-        bytes32 id
-    ) internal override preventDuplicatedExecution(id) {
+        bytes memory extraData
+    ) internal override {
+        (address callBackContract, bytes memory callBackArgs) = abi.decode(
+            extraData,
+            (address, bytes)
+        );
+
+        (
+            bytes32 id,
+            IRequestsManager.RequestStats memory reqStats
+        ) = getRequestProps(
+                Request({
+                    callBackContract: callBackContract,
+                    callBackArgs: callBackArgs
+                })
+            );
+        // prevent duplicated request execution
+        if (reqStats.status == IRequestsManager.RequestStatus.Pending) {
+            revert InvalidRequestsExecution(id);
+        }
+
         (, /* bytes32[3] reportContextData */ bytes memory reportData) = abi
             .decode(unverifiedReport, (bytes32[3], bytes));
 
@@ -83,19 +101,6 @@ contract Oracle is
             (BasicReport)
         );
 
-        mainExecution(report, extraData, id);
-    }
-
-    function mainExecution(
-        BasicReport memory report,
-        bytes memory extraData,
-        bytes32 id
-    ) private {
-        (address callBackContract, bytes memory callBackArgs) = abi.decode(
-            extraData,
-            (address, bytes)
-        );
-        // solhint-disable-next-line avoid-low-level-calls
         IOracleConsumerContract(callBackContract).consume(
             ForwardData({
                 price: int256(int192(report.price)),
@@ -103,15 +108,25 @@ contract Oracle is
                 forwardArguments: callBackArgs
             })
         );
-        fulfillRequest(id);
+
+        requestManager.fulfillRequest(id);
     }
 
-    function executionFallback(
-        GenericRequest memory request,
-        bytes32 id
-    ) external fallbackExecutionAllowed(id) {
+    function fallbackCall(Request memory request) external {
+        (
+            bytes32 id,
+            IRequestsManager.RequestStats memory reqStats
+        ) = getRequestProps(request);
+
+        if (
+            reqStats.status != IRequestsManager.RequestStatus.Pending ||
+            reqStats.blockNumber + requestTimeout < block.number
+        ) {
+            revert InvalidRequestsExecution(id);
+        }
+
         int256 price = getLatestPrice();
-        // solhint-disable-next-line avoid-low-level-calls
+
         IOracleConsumerContract(request.callBackContract).consume(
             ForwardData({
                 price: price,
@@ -119,21 +134,17 @@ contract Oracle is
                 forwardArguments: request.callBackArgs
             })
         );
-        fulfillRequest(id);
+        requestManager.fulfillRequest(id);
     }
 
-    function addRequest(bytes32 _id) internal {
-        requestManager.addRequest(_id);
-    }
+    // Utils
 
-    function fulfillRequest(bytes32 _id) internal {
-        requestManager.fulfillRequest(_id);
-    }
+    function getRequestProps(
+        Request memory request
+    ) public returns (bytes32, RequestsManager.RequestStats memory) {
+        bytes32 id = request.generateId();
 
-    function getRequest(
-        bytes32 _id
-    ) public view override returns (IRequestsManager.Request memory) {
-        return requestManager.getRequest(_id);
+        return (id, requestManager.getRequest(id));
     }
 
     fallback() external payable {}

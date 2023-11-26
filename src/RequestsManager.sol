@@ -8,11 +8,11 @@ contract RequestsManager is IRequestsManager {
     event RequestAdded(address indexed emitter, uint256 blockNumber);
     event RequestFulfilled(address indexed emitter, uint256 blockNumber);
 
-    // _id => Request
-    mapping(bytes32 => Request) private _pendingRequests;
+    // _id => RequestStats
+    mapping(bytes32 => RequestStats) private _pendingRequests;
 
     function addRequest(bytes32 _id) external {
-        _pendingRequests[_id] = Request({
+        _pendingRequests[_id] = RequestStats({
             status: IRequestsManager.RequestStatus.Pending,
             blockNumber: block.number
         });
@@ -20,14 +20,16 @@ contract RequestsManager is IRequestsManager {
     }
 
     function fulfillRequest(bytes32 _id) external {
-        _pendingRequests[_id] = Request({
+        _pendingRequests[_id] = RequestStats({
             status: IRequestsManager.RequestStatus.Fulfilled,
             blockNumber: block.number
         });
         emit RequestFulfilled(msg.sender, block.number);
     }
 
-    function getRequest(bytes32 _id) external view returns (Request memory) {
+    function getRequest(
+        bytes32 _id
+    ) external view returns (RequestStats memory) {
         return _pendingRequests[_id];
     }
 }
