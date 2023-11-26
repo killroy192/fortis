@@ -141,7 +141,7 @@ contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
 
     function getRequestProps(
         Request memory request
-    ) public returns (bytes32, RequestsManager.RequestStats memory) {
+    ) public view returns (bytes32, RequestsManager.RequestStats memory) {
         bytes32 id = request.generateId();
 
         return (id, requestManager.getRequest(id));

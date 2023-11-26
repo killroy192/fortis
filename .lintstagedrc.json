@@ -1,10 +1,10 @@
 {
   "src/**/*.sol": [
-    "solhint --fix --noPrompt",
+    "solhint --fix --noPrompt src/**/*.sol",
     "prettier --write"
   ],
   "test/**/*.sol": [
-    "solhint --fix --noPrompt",
+    "solhint --fix --noPrompt test/**/*.sol",
     "prettier --write"
   ],
   "integration/**/*.js": "prettier --write",
