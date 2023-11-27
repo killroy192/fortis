@@ -24,6 +24,7 @@ contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
     using RequestLib for Request;
 
     error InvalidRequestsExecution(bytes32 id);
+    error FailedRequestsConsumption(bytes32 id);
 
     IVerifierProxy public immutable verifier;
     RequestsManager public immutable requestManager;
@@ -42,10 +43,11 @@ contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
         requestTimeout = _requestTimeout;
     }
 
-    function emitRequest(Request memory request) external {
+    function emitRequest(Request memory request) external returns (bool) {
         bytes32 id = request.generateId();
         requestManager.addRequest(id);
         emit AutomationTrigger(id);
+        return true;
     }
 
     function verifyAndCall(
@@ -101,7 +103,7 @@ contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
             (BasicReport)
         );
 
-        IOracleConsumerContract(callBackContract).consume(
+        bool success = IOracleConsumerContract(callBackContract).consume(
             ForwardData({
                 price: int256(int192(report.price)),
                 feedType: FeedType.DataStream,
@@ -109,10 +111,16 @@ contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
             })
         );
 
+        if (!success) {
+            revert FailedRequestsConsumption(id);
+        }
+
         requestManager.fulfillRequest(id);
+
+        return true;
     }
 
-    function fallbackCall(Request memory request) external {
+    function fallbackCall(Request memory request) external returns (bool) {
         (
             bytes32 id,
             IRequestsManager.RequestStats memory reqStats
@@ -127,14 +135,22 @@ contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
 
         int256 price = getLatestPrice();
 
-        IOracleConsumerContract(request.callBackContract).consume(
-            ForwardData({
-                price: price,
-                feedType: FeedType.PriceFeed,
-                forwardArguments: request.callBackArgs
-            })
-        );
+        bool success = IOracleConsumerContract(request.callBackContract)
+            .consume(
+                ForwardData({
+                    price: price,
+                    feedType: FeedType.PriceFeed,
+                    forwardArguments: request.callBackArgs
+                })
+            );
+
+        if (!success) {
+            revert FailedRequestsConsumption(id);
+        }
+
         requestManager.fulfillRequest(id);
+
+        return true;
     }
 
     // Utils
