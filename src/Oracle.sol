@@ -116,8 +116,6 @@ contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
         }
 
         requestManager.fulfillRequest(id);
-
-        return true;
     }
 
     function fallbackCall(Request memory request) external returns (bool) {
