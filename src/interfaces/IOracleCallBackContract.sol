@@ -14,5 +14,5 @@ struct ForwardData {
 }
 
 interface IOracleConsumerContract {
-    function consume(ForwardData memory forwardData) external;
+    function consume(ForwardData memory forwardData) external returns (bool);
 }

@@ -7,5 +7,5 @@ import {Request} from "./Request.sol";
 interface IEmitter {
     event AutomationTrigger(bytes32 id);
 
-    function emitRequest(Request memory request) external;
+    function emitRequest(Request memory request) external returns (bool);
 }
