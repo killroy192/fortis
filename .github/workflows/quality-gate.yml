@@ -1,0 +1,35 @@
+name: Base On-Push Quality Gate
+on:
+  push:
+    branches:
+      - 'main'
+      - 'feat/test-and-ci'
+  pull_request:
+    types: [opened, reopened]
+
+env:
+  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+jobs:
+  build_and_validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          always-auth: true
+          cache: "npm"
+          node-version: "18.x"
+          registry-url: https://npm.pkg.github.com
+      - name: Install
+        run: make install-ci
+      - name: code quality
+        run: make lint
+      - name: Run unit tests
+        run: make test
+      # - name: Run deployment
+      #   run: make deploy
