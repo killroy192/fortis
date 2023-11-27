@@ -1,11 +1,6 @@
-name: Base On-Push Quality Gate
+name: Quality Gate
 on:
   push:
-    branches:
-      - 'main'
-      - 'feat/test-and-ci'
-  pull_request:
-    types: [opened, reopened]
 
 env:
   NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -25,7 +20,9 @@ jobs:
           cache: "npm"
           node-version: "18.x"
           registry-url: https://npm.pkg.github.com
-      - name: Install
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+      - name: Install Dependancies
         run: make install-ci
       - name: code quality
         run: make lint
