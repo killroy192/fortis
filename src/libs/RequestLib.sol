@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import {Request} from "../interfaces/Request.sol";
+import {Request} from "@src/interfaces/Request.sol";
 
 library RequestLib {
     function generateId(

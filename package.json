@@ -19,10 +19,6 @@
       "solhint src/**/*.sol",
       "prettier --write"
     ],
-    "test/**/*.sol": [
-      "solhint test/**/*.sol",
-      "prettier --write"
-    ],
     "integration/**/*.js": "prettier --write",
     "deployment-lock.json": "prettier --write"
   },

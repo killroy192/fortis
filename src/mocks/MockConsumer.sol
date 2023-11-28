@@ -1,17 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import {Request} from "./interfaces/Request.sol";
-import {IEmitter} from "./interfaces/IEmitter.sol";
-import {IOracleConsumerContract, FeedType, ForwardData} from "./interfaces/IOracleCallBackContract.sol";
+import {Request} from "@src/interfaces/Request.sol";
+import {IEmitter} from "@src/interfaces/IEmitter.sol";
+import {IOracleConsumerContract, FeedType, ForwardData} from "@src/interfaces/IOracleCallBackContract.sol";
 
-struct CustomRequestParams {
-    address tokenIn;
-    address tokenOut;
-    uint256 amountIn;
-}
-
-contract TestConsumer is IOracleConsumerContract {
+/**
+ * @title MockConsumer
+ * @notice Use this contract implements IOracleConsumerContract
+ * interface with simple data forwarding logic.
+ * Can be used as an example or for e2e/demo.
+ */
+contract MockConsumer is IOracleConsumerContract {
+    struct CustomRequestParams {
+        address tokenIn;
+        address tokenOut;
+        uint256 amountIn;
+    }
     error UnsuccesfullTrigger();
 
     int256 public lastConsumedPrice;

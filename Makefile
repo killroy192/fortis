@@ -26,11 +26,11 @@ test-e2e :; npx hardhat test
 
 snapshot :; forge snapshot
 
-slither :; slither ./contracts 
+slither :; slither ./src 
 
-format :; npx prettier --write src/**/*.sol && npx prettier --write test/**/*.sol
+format :; npx prettier --write src/**/*.sol
 
-lint :; npx solhint src/**/*.sol && npx solhint test/**/*.sol
+lint :; npx solhint src/**/*.sol
 
 anvil :; anvil -m 'test test test test test test test test test test test junk'
 
