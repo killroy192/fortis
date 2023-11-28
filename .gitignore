@@ -10,7 +10,6 @@ broadcast/
 abi/
 
 node_modules
-package-lock.json
 .yarn
 lib
 
