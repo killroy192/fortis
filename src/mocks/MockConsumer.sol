@@ -3,6 +3,7 @@ pragma solidity ^0.8.16;
 
 import {Request} from "src/interfaces/Request.sol";
 import {IEmitter} from "src/interfaces/IEmitter.sol";
+import {IMockEmitter} from "src/interfaces/IMockEmitter.sol";
 import {IOracleConsumerContract, FeedType, ForwardData} from "src/interfaces/IOracleCallBackContract.sol";
 
 /**
@@ -22,16 +23,14 @@ contract MockConsumer is IOracleConsumerContract {
     int256 public lastConsumedPrice;
     FeedType public lastConsumedFeedType;
     CustomRequestParams public lastConsumedForwardArguments;
-    IEmitter public immutable oracle;
+    address public immutable oracle;
 
     constructor(address _oracle) {
-        oracle = IEmitter(_oracle);
+        oracle = _oracle;
     }
 
-    function trigger(
-        CustomRequestParams memory params
-    ) external returns (bool) {
-        bool success = oracle.emitRequest(
+    function trigger(CustomRequestParams memory params) public returns (bool) {
+        bool success = IEmitter(oracle).emitRequest(
             Request({
                 callBackContract: address(this),
                 callBackArgs: abi.encode(params)
@@ -41,6 +40,43 @@ contract MockConsumer is IOracleConsumerContract {
             revert UnsuccesfullTrigger();
         }
         return true;
+    }
+
+    function triggerHardcoded() external returns (bool) {
+        return
+            trigger(
+                CustomRequestParams({
+                    tokenIn: address(0),
+                    tokenOut: address(0),
+                    amountIn: 100
+                })
+            );
+    }
+
+    function triggerFake(
+        CustomRequestParams memory params
+    ) public returns (bool) {
+        bool success = IMockEmitter(oracle).emitFakeRequest(
+            Request({
+                callBackContract: address(this),
+                callBackArgs: abi.encode(params)
+            })
+        );
+        if (!success) {
+            revert UnsuccesfullTrigger();
+        }
+        return true;
+    }
+
+    function triggerFakeHardcoded() external returns (bool) {
+        return
+            triggerFake(
+                CustomRequestParams({
+                    tokenIn: address(0),
+                    tokenOut: address(0),
+                    amountIn: 100
+                })
+            );
     }
 
     function consume(ForwardData memory forwardData) external returns (bool) {

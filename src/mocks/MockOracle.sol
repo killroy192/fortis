@@ -4,6 +4,7 @@ pragma solidity ^0.8.16;
 import {Oracle} from "src/Oracle.sol";
 import {RequestLib} from "src/libs/RequestLib.sol";
 import {Request} from "src/interfaces/Request.sol";
+import {IMockEmitter} from "src/interfaces/IMockEmitter.sol";
 
 /**
  * @title MockOracle
@@ -13,37 +14,20 @@ import {Request} from "src/interfaces/Request.sol";
  * emitting non standart event.
  * Can be used as an example or for e2e/demo.
  */
-contract MockOracle is Oracle {
+contract MockOracle is Oracle, IMockEmitter {
     using RequestLib for Request;
-
-    event FakeAutomationTrigger(Request request);
-
-    Request private request;
 
     constructor(
         address _verifier,
         string memory _dataStreamfeedId,
         address _priceFeedId,
-        uint256 _requestTimeout,
-        address _hardcodedConsumer
-    ) Oracle(_verifier, _dataStreamfeedId, _priceFeedId, _requestTimeout) {
-        request = Request({
-            callBackContract: _hardcodedConsumer,
-            callBackArgs: ""
-        });
-    }
+        uint256 _requestTimeout
+    ) Oracle(_verifier, _dataStreamfeedId, _priceFeedId, _requestTimeout) {}
 
-    function emitHardCodedFakeRequest() external returns (bool) {
+    function emitFakeRequest(Request memory request) external returns (bool) {
         bytes32 id = request.generateId();
         requestManager.addRequest(id);
         emit FakeAutomationTrigger(request);
-        return true;
-    }
-
-    function emitHardcodedRequest() external returns (bool) {
-        bytes32 id = request.generateId();
-        requestManager.addRequest(id);
-        emit AutomationTrigger(request);
         return true;
     }
 }
