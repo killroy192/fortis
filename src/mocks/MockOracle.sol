@@ -16,33 +16,34 @@ import {Request} from "src/interfaces/Request.sol";
 contract MockOracle is Oracle {
     using RequestLib for Request;
 
-    event FakeAutomationTrigger(bytes32 id);
+    event FakeAutomationTrigger(Request request);
+
+    Request private request;
 
     constructor(
         address _verifier,
         string memory _dataStreamfeedId,
         address _priceFeedId,
-        uint256 _requestTimeout
-    ) Oracle(_verifier, _dataStreamfeedId, _priceFeedId, _requestTimeout) {}
-
-    function emitFakeRequest(Request memory request) external returns (bool) {
-        bytes32 id = request.generateId();
-        requestManager.addRequest(id);
-        emit FakeAutomationTrigger(id);
-        return true;
+        uint256 _requestTimeout,
+        address _hardcodedConsumer
+    ) Oracle(_verifier, _dataStreamfeedId, _priceFeedId, _requestTimeout) {
+        request = Request({
+            callBackContract: _hardcodedConsumer,
+            callBackArgs: ""
+        });
     }
 
     function emitHardCodedFakeRequest() external returns (bool) {
-        bytes32 id = keccak256(abi.encodePacked(address(this)));
+        bytes32 id = request.generateId();
         requestManager.addRequest(id);
-        emit FakeAutomationTrigger(id);
+        emit FakeAutomationTrigger(request);
         return true;
     }
 
     function emitHardcodedRequest() external returns (bool) {
-        bytes32 id = keccak256(abi.encodePacked(address(this)));
+        bytes32 id = request.generateId();
         requestManager.addRequest(id);
-        emit AutomationTrigger(id);
+        emit AutomationTrigger(request);
         return true;
     }
 }

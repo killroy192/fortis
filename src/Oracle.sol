@@ -46,7 +46,7 @@ contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
     function emitRequest(Request memory request) external returns (bool) {
         bytes32 id = request.generateId();
         requestManager.addRequest(id);
-        emit AutomationTrigger(id);
+        emit AutomationTrigger(request);
         return true;
     }
 
@@ -54,20 +54,12 @@ contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
         bytes memory unverifiedReport,
         bytes memory extraData
     ) internal override {
-        (address callBackContract, bytes memory callBackArgs) = abi.decode(
-            extraData,
-            (address, bytes)
-        );
+        Request memory request = abi.decode(extraData, (Request));
 
         (
             bytes32 id,
             IRequestsManager.RequestStats memory reqStats
-        ) = getRequestProps(
-                Request({
-                    callBackContract: callBackContract,
-                    callBackArgs: callBackArgs
-                })
-            );
+        ) = getRequestProps(request);
         // prevent duplicated request execution
         if (reqStats.status == IRequestsManager.RequestStatus.Pending) {
             revert InvalidRequestsExecution(id);
@@ -103,13 +95,14 @@ contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
             (BasicReport)
         );
 
-        bool success = IOracleConsumerContract(callBackContract).consume(
-            ForwardData({
-                price: int256(int192(report.price)),
-                feedType: FeedType.DataStream,
-                forwardArguments: callBackArgs
-            })
-        );
+        bool success = IOracleConsumerContract(request.callBackContract)
+            .consume(
+                ForwardData({
+                    price: int256(int192(report.price)),
+                    feedType: FeedType.DataStream,
+                    forwardArguments: request.callBackArgs
+                })
+            );
 
         if (!success) {
             revert FailedRequestsConsumption(id);
