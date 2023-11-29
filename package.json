@@ -16,7 +16,7 @@
   },
   "lint-staged": {
     "src/**/*.sol": [
-      "solhint src/**/*.sol",
+      "solhint -q --fix",
       "prettier --write"
     ],
     "integration/**/*.js": "prettier --write",
