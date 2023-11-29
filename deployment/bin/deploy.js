@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const hre = require("hardhat");
 
-const loggedNetworks = ["sepolia", "arbitrum-sepolia"];
+const loggedNetworks = ["arbitrum-sepolia"];
 
 const isLoggedNetwork = () => loggedNetworks.includes(hre.network.name);
 
@@ -17,38 +17,52 @@ const getDeploymentLockData = async (filePath) => {
 
 const getLibrariesDynamically = (deploymentLock, config = {}) =>
   Object.entries(config).reduce((acc, [libName, getter]) => {
+    if (typeof getter === "function") {
+      return {
+        ...acc,
+        [libName]: getter(deploymentLock),
+      };
+    }
     return {
       ...acc,
-      [libName]: getter(deploymentLock),
+      [libName]: getter,
     };
   }, {});
 
 const deployOnlyChanged =
   (deploymentConfig) =>
   async (deploymentLock = {}) => {
-    const { contractName, deployerOptions = {}, args = [] } = deploymentConfig;
+    const { contract, deployerOptions = {}, args = [] } = deploymentConfig;
 
     console.log("prepare deployment libraries");
 
-    deployerOptions.libraries = {
-      ...deployerOptions?.libraries,
-      ...getLibrariesDynamically(deploymentLock, deployerOptions?.dynamicLibs),
-    };
+    deployerOptions.libraries = getLibrariesDynamically(
+      deploymentLock,
+      deployerOptions?.libs,
+    );
 
-    console.log("done", deployerOptions, args);
+    const deploymentArgs = args.map((arg) => {
+      if (typeof arg === "function") {
+        return arg(deploymentLock);
+      }
+      return arg;
+    });
 
-    console.log("Try deploy contract...", contractName);
+    console.log("deployerOptions", deployerOptions);
+    console.log("deploymentArgs", deploymentArgs);
+
+    console.log("Try deploy contract...", contract);
     const deployer = await hre.ethers.getContractFactory(
-      contractName,
+      contract,
       deployerOptions,
     );
 
-    if (deployer.bytecode === deploymentLock[contractName]?.code) {
+    if (deployer.bytecode === deploymentLock[contract]?.code) {
       console.log("contract unchanged, skip deployment");
       return deploymentLock;
     }
 
-    const deployment = await deployer.deploy(...args);
+    const deployment = await deployer.deploy(...deploymentArgs);
 
     await deployment.waitForDeployment();
 
@@ -61,39 +75,34 @@ const deployOnlyChanged =
 
       await hre.run("verify:verify", {
         address: contractAddress,
-        constructorArguments: args,
+        constructorArguments: deploymentArgs,
       });
     }
 
-    console.log('done!')
+    console.log("done!");
 
     return {
       ...deploymentLock,
-      [contractName]: { addr: contractAddress, code: deployer.bytecode },
+      [contract]: { addr: contractAddress, code: deployer.bytecode },
     };
   };
 
-module.exports = async function main() {
+module.exports = async function main(config) {
   try {
     const networkName = hre.network.name;
     const filePath = path.resolve("deployment-lock.json");
 
-    const currentDeploymentLock = await getDeploymentLockData(
-      filePath,
+    const currentDeploymentLock = await getDeploymentLockData(filePath);
+
+    const deploymentResult = await config.reduce(
+      (acc, c) => acc.then(deployOnlyChanged(c)),
+      Promise.resolve(currentDeploymentLock[networkName]),
     );
 
-    const deploymentResult = await deployOnlyChanged({
-      contractName: "StreamsUpkeep",
-      args: [
-        "0x2ff010DEbC1297f19579B4246cad07bd24F2488A",
-      ],
-    })(currentDeploymentLock[networkName]).then(
-      deployOnlyChanged({ contractName: "Emitter" }),
-    );
-
-    console.log(`Deployment to ${networkName} has finished, update lock file`);
+    console.log(`Deployment to ${networkName} has finished`);
 
     if (loggedNetworks.includes(networkName)) {
+      console.log("update lock file");
       await fsp.writeFile(
         filePath,
         JSON.stringify({

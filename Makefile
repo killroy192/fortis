@@ -38,14 +38,9 @@ hh-node :; npx hardhat node
 
 abi :; npx hardhat export-abi
 
-deploy :; npx hardhat run deployment
+network?=hardhat
+script?=deployment/e2e
 
-deploy-arbitrum-sepolia :; npx hardhat run --network arbitrum-sepolia deployment
-
-deploy-sepolia :; npx hardhat run --network sepolia deployment
-
-deploy-anvil :; npx hardhat run --network anvil deployment
-
-deploy-localhost :; npx hardhat run --network localhost deployment
+deploy :; npx hardhat run --network $(network) $(script)
 
 -include ${FCT_PLUGIN_PATH}/makefile-external
