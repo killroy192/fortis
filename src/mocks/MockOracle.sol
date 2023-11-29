@@ -38,4 +38,11 @@ contract MockOracle is Oracle {
         emit FakeAutomationTrigger(id);
         return true;
     }
+
+    function emitHardcodedRequest() external returns (bool) {
+        bytes32 id = keccak256(abi.encodePacked(address(this)));
+        requestManager.addRequest(id);
+        emit AutomationTrigger(id);
+        return true;
+    }
 }
