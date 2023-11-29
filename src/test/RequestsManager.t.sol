@@ -6,8 +6,8 @@ pragma solidity ^0.8.16;
 // solhint-disable no-console
 
 import "@std/Test.sol";
-import {RequestsManager} from "@src/RequestsManager.sol";
-import {IRequestsManager} from "@src/interfaces/IRequestsManager.sol";
+import {RequestsManager} from "src/RequestsManager.sol";
+import {IRequestsManager} from "src/interfaces/IRequestsManager.sol";
 
 contract RequestsManagerTest is Test {
     event RequestAdded(address indexed emitter, uint256 blockNumber);

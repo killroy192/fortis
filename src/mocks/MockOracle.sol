@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import {Oracle} from "@src/Oracle.sol";
-import {RequestLib} from "@src/libs/RequestLib.sol";
-import {Request} from "@src/interfaces/Request.sol";
+import {Oracle} from "src/Oracle.sol";
+import {RequestLib} from "src/libs/RequestLib.sol";
+import {Request} from "src/interfaces/Request.sol";
 
 /**
  * @title MockOracle

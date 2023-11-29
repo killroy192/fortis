@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import {Request} from "@src/interfaces/Request.sol";
-import {IEmitter} from "@src/interfaces/IEmitter.sol";
-import {IOracleConsumerContract, FeedType, ForwardData} from "@src/interfaces/IOracleCallBackContract.sol";
+import {Request} from "src/interfaces/Request.sol";
+import {IEmitter} from "src/interfaces/IEmitter.sol";
+import {IOracleConsumerContract, FeedType, ForwardData} from "src/interfaces/IOracleCallBackContract.sol";
 
 /**
  * @title MockConsumer
