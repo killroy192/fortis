@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import {Request} from "src/interfaces/Request.sol";
 import {IOracle} from "src/interfaces/IOracle.sol";
 import {IOracleConsumerContract, FeedType, ForwardData} from "src/interfaces/IOracleCallBackContract.sol";
 
@@ -20,8 +19,8 @@ contract MockConsumer is IOracleConsumerContract {
 
     error UnsuccesfullTrigger();
 
-    event AutomationTrigger(Request request);
-    event FakeAutomationTrigger(Request request);
+    event AutomationTrigger(address callBackContract, bytes callBackArgs);
+    event FakeAutomationTrigger(address callBackContract, bytes callBackArgs);
 
     int256 public lastConsumedPrice;
     FeedType public lastConsumedFeedType;
@@ -39,28 +38,27 @@ contract MockConsumer is IOracleConsumerContract {
         oracle = _oracle;
     }
 
-    function addRequest(
-        CustomRequestParams memory params
-    ) private returns (Request memory request) {
-        request = Request({
-            callBackContract: address(this),
-            callBackArgs: abi.encode(params)
-        });
-        bool success = IOracle(oracle).addRequest(request);
+    function addRequest(CustomRequestParams memory params) private {
+        bool success = IOracle(oracle).addRequest(
+            address(this),
+            abi.encode(params)
+        );
         if (!success) {
             revert UnsuccesfullTrigger();
         }
     }
 
     function trigger(CustomRequestParams memory params) public returns (bool) {
-        emit AutomationTrigger(addRequest(params));
+        addRequest(params);
+        emit AutomationTrigger(address(this), abi.encode(params));
         return true;
     }
 
     function triggerFake(
         CustomRequestParams memory params
     ) public returns (bool) {
-        emit FakeAutomationTrigger(addRequest(params));
+        addRequest(params);
+        emit FakeAutomationTrigger(address(this), abi.encode(params));
         return true;
     }
 

@@ -5,5 +5,8 @@ pragma solidity ^0.8.16;
 import {Request} from "./Request.sol";
 
 interface IOracle {
-    function addRequest(Request memory request) external returns (bool);
+    function addRequest(
+        address callbackContract,
+        bytes memory callbackArgs
+    ) external returns (bool);
 }

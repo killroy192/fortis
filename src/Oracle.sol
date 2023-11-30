@@ -6,7 +6,6 @@ import {Log} from "@chainlink/contracts/src/v0.8/automation/interfaces/ILogAutom
 
 import {IRewardManager} from "@chainlink/contracts/src/v0.8/llo-feeds/interfaces/IRewardManager.sol";
 
-import {Request} from "./interfaces/Request.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
 import {IFeeManager} from "./interfaces/IFeeManager.sol";
@@ -20,9 +19,7 @@ import {DataStreamConsumer} from "./DataStreamConsumer.sol";
 import {PriceFeedConsumer} from "./PriceFeedConsumer.sol";
 import {RequestsManager} from "./RequestsManager.sol";
 
-contract Oracle is DataStreamConsumer, PriceFeedConsumer {
-    using RequestLib for Request;
-
+contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
     error DuplicatedRequestCreation(bytes32 id);
     error InvalidRequestsExecution(bytes32 id);
     error FailedRequestsConsumption(bytes32 id);
@@ -44,11 +41,14 @@ contract Oracle is DataStreamConsumer, PriceFeedConsumer {
         requestTimeout = _requestTimeout;
     }
 
-    function addRequest(Request memory request) external returns (bool) {
+    function addRequest(
+        address callbackContract,
+        bytes memory callbackArgs
+    ) external returns (bool) {
         (
             bytes32 id,
             IRequestsManager.RequestStats memory reqStats
-        ) = getRequestProps(request);
+        ) = getRequestProps(callbackContract, callbackArgs);
         // prevent duplicated request execution
         if (reqStats.status == IRequestsManager.RequestStatus.Fulfilled) {
             revert DuplicatedRequestCreation(id);
@@ -61,14 +61,18 @@ contract Oracle is DataStreamConsumer, PriceFeedConsumer {
         bytes memory unverifiedReport,
         bytes memory extraData
     ) internal override {
-        Request memory request = abi.decode(extraData, (Request));
-        bytes32 id = request.generateId();
+        (address callbackContract, bytes memory callbackArgs) = abi.decode(
+            extraData,
+            (address, bytes)
+        );
+
+        (
+            bytes32 id,
+            IRequestsManager.RequestStats memory reqStats
+        ) = getRequestProps(callbackContract, callbackArgs);
 
         // prevent duplicated request execution
-        if (
-            requestManager.getRequest(id).status !=
-            IRequestsManager.RequestStatus.Pending
-        ) {
+        if (reqStats.status != IRequestsManager.RequestStatus.Pending) {
             revert InvalidRequestsExecution(id);
         }
 
@@ -96,14 +100,13 @@ contract Oracle is DataStreamConsumer, PriceFeedConsumer {
             (BasicReport)
         );
 
-        bool success = IOracleConsumerContract(request.callBackContract)
-            .consume(
-                ForwardData({
-                    price: report.price,
-                    feedType: FeedType.DataStream,
-                    forwardArguments: request.callBackArgs
-                })
-            );
+        bool success = IOracleConsumerContract(callbackContract).consume(
+            ForwardData({
+                price: report.price,
+                feedType: FeedType.DataStream,
+                forwardArguments: callbackArgs
+            })
+        );
 
         if (!success) {
             revert FailedRequestsConsumption(id);
@@ -112,11 +115,14 @@ contract Oracle is DataStreamConsumer, PriceFeedConsumer {
         requestManager.fulfillRequest(id);
     }
 
-    function fallbackCall(Request memory request) external returns (bool) {
+    function fallbackCall(
+        address callbackContract,
+        bytes memory callbackArgs
+    ) external returns (bool) {
         (
             bytes32 id,
             IRequestsManager.RequestStats memory reqStats
-        ) = getRequestProps(request);
+        ) = getRequestProps(callbackContract, callbackArgs);
 
         if (
             reqStats.status != IRequestsManager.RequestStatus.Pending ||
@@ -127,14 +133,13 @@ contract Oracle is DataStreamConsumer, PriceFeedConsumer {
 
         int256 price = getLatestPrice();
 
-        bool success = IOracleConsumerContract(request.callBackContract)
-            .consume(
-                ForwardData({
-                    price: price,
-                    feedType: FeedType.PriceFeed,
-                    forwardArguments: request.callBackArgs
-                })
-            );
+        bool success = IOracleConsumerContract(callbackContract).consume(
+            ForwardData({
+                price: price,
+                feedType: FeedType.PriceFeed,
+                forwardArguments: callbackArgs
+            })
+        );
 
         if (!success) {
             revert FailedRequestsConsumption(id);
@@ -148,9 +153,10 @@ contract Oracle is DataStreamConsumer, PriceFeedConsumer {
     // Utils
 
     function getRequestProps(
-        Request memory request
+        address callbackContract,
+        bytes memory callbackArgs
     ) public view returns (bytes32, RequestsManager.RequestStats memory) {
-        bytes32 id = request.generateId();
+        bytes32 id = RequestLib.generateId(callbackContract, callbackArgs);
 
         return (id, requestManager.getRequest(id));
     }
