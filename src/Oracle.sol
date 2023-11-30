@@ -10,7 +10,7 @@ import {Request} from "./interfaces/Request.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
 import {IFeeManager} from "./interfaces/IFeeManager.sol";
-import {IEmitter} from "./interfaces/IEmitter.sol";
+import {IOracle} from "./interfaces/IOracle.sol";
 import {IOracleConsumerContract, ForwardData, FeedType} from "./interfaces/IOracleCallBackContract.sol";
 import {IRequestsManager} from "./interfaces/IRequestsManager.sol";
 
@@ -20,9 +20,10 @@ import {DataStreamConsumer} from "./DataStreamConsumer.sol";
 import {PriceFeedConsumer} from "./PriceFeedConsumer.sol";
 import {RequestsManager} from "./RequestsManager.sol";
 
-contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
+contract Oracle is DataStreamConsumer, PriceFeedConsumer {
     using RequestLib for Request;
 
+    error DuplicatedRequestCreation(bytes32 id);
     error InvalidRequestsExecution(bytes32 id);
     error FailedRequestsConsumption(bytes32 id);
 
@@ -43,10 +44,16 @@ contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
         requestTimeout = _requestTimeout;
     }
 
-    function emitRequest(Request memory request) external returns (bool) {
-        bytes32 id = request.generateId();
+    function addRequest(Request memory request) external returns (bool) {
+        (
+            bytes32 id,
+            IRequestsManager.RequestStats memory reqStats
+        ) = getRequestProps(request);
+        // prevent duplicated request execution
+        if (reqStats.status == IRequestsManager.RequestStatus.Fulfilled) {
+            revert DuplicatedRequestCreation(id);
+        }
         requestManager.addRequest(id);
-        emit AutomationTrigger(request);
         return true;
     }
 
@@ -55,13 +62,13 @@ contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
         bytes memory extraData
     ) internal override {
         Request memory request = abi.decode(extraData, (Request));
+        bytes32 id = request.generateId();
 
-        (
-            bytes32 id,
-            IRequestsManager.RequestStats memory reqStats
-        ) = getRequestProps(request);
         // prevent duplicated request execution
-        if (reqStats.status == IRequestsManager.RequestStatus.Pending) {
+        if (
+            requestManager.getRequest(id).status !=
+            IRequestsManager.RequestStatus.Pending
+        ) {
             revert InvalidRequestsExecution(id);
         }
 
@@ -69,9 +76,6 @@ contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
             .decode(unverifiedReport, (bytes32[3], bytes));
 
         IFeeManager feeManager = IFeeManager(address(verifier.s_feeManager()));
-        IRewardManager rewardManager = IRewardManager(
-            address(feeManager.i_rewardManager())
-        );
 
         address feeTokenAddress = feeManager.i_linkAddress();
         (Common.Asset memory fee, , ) = feeManager.getFeeAndReward(
@@ -81,24 +85,21 @@ contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
         );
 
         // Approve rewardManager to spend this contract's balance in fees
-        IERC20(feeTokenAddress).approve(address(rewardManager), fee.amount);
-
-        // Verify the report
-        bytes memory verifiedReportData = verifier.verify(
-            unverifiedReport,
-            abi.encode(feeTokenAddress)
+        IERC20(feeTokenAddress).approve(
+            address(feeManager.i_rewardManager()),
+            fee.amount
         );
 
-        // Decode verified report data into BasicReport struct
+        // Verify & decode report data into BasicReport struct
         BasicReport memory report = abi.decode(
-            verifiedReportData,
+            verifier.verify(unverifiedReport, abi.encode(feeTokenAddress)),
             (BasicReport)
         );
 
         bool success = IOracleConsumerContract(request.callBackContract)
             .consume(
                 ForwardData({
-                    price: int256(int192(report.price)),
+                    price: report.price,
                     feedType: FeedType.DataStream,
                     forwardArguments: request.callBackArgs
                 })

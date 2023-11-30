@@ -2,8 +2,7 @@
 pragma solidity ^0.8.16;
 
 import {Request} from "src/interfaces/Request.sol";
-import {IEmitter} from "src/interfaces/IEmitter.sol";
-import {IMockEmitter} from "src/interfaces/IMockEmitter.sol";
+import {IOracle} from "src/interfaces/IOracle.sol";
 import {IOracleConsumerContract, FeedType, ForwardData} from "src/interfaces/IOracleCallBackContract.sol";
 
 /**
@@ -18,65 +17,59 @@ contract MockConsumer is IOracleConsumerContract {
         address tokenOut;
         uint256 amountIn;
     }
+
     error UnsuccesfullTrigger();
+
+    event AutomationTrigger(Request request);
+    event FakeAutomationTrigger(Request request);
 
     int256 public lastConsumedPrice;
     FeedType public lastConsumedFeedType;
     CustomRequestParams public lastConsumedForwardArguments;
     address public immutable oracle;
 
+    CustomRequestParams private hardcodedRequestParams =
+        CustomRequestParams({
+            tokenIn: address(0),
+            tokenOut: address(0),
+            amountIn: 100
+        });
+
     constructor(address _oracle) {
         oracle = _oracle;
     }
 
-    function trigger(CustomRequestParams memory params) public returns (bool) {
-        bool success = IEmitter(oracle).emitRequest(
-            Request({
-                callBackContract: address(this),
-                callBackArgs: abi.encode(params)
-            })
-        );
+    function addRequest(
+        CustomRequestParams memory params
+    ) private returns (Request memory request) {
+        request = Request({
+            callBackContract: address(this),
+            callBackArgs: abi.encode(params)
+        });
+        bool success = IOracle(oracle).addRequest(request);
         if (!success) {
             revert UnsuccesfullTrigger();
         }
-        return true;
     }
 
-    function triggerHardcoded() external returns (bool) {
-        return
-            trigger(
-                CustomRequestParams({
-                    tokenIn: address(0),
-                    tokenOut: address(0),
-                    amountIn: 100
-                })
-            );
+    function trigger(CustomRequestParams memory params) public returns (bool) {
+        emit AutomationTrigger(addRequest(params));
+        return true;
     }
 
     function triggerFake(
         CustomRequestParams memory params
     ) public returns (bool) {
-        bool success = IMockEmitter(oracle).emitFakeRequest(
-            Request({
-                callBackContract: address(this),
-                callBackArgs: abi.encode(params)
-            })
-        );
-        if (!success) {
-            revert UnsuccesfullTrigger();
-        }
+        emit FakeAutomationTrigger(addRequest(params));
         return true;
     }
 
+    function triggerHardcoded() external returns (bool) {
+        return trigger(hardcodedRequestParams);
+    }
+
     function triggerFakeHardcoded() external returns (bool) {
-        return
-            triggerFake(
-                CustomRequestParams({
-                    tokenIn: address(0),
-                    tokenOut: address(0),
-                    amountIn: 100
-                })
-            );
+        return triggerFake(hardcodedRequestParams);
     }
 
     function consume(ForwardData memory forwardData) external returns (bool) {

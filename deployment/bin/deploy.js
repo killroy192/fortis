@@ -57,7 +57,12 @@ const deployOnlyChanged =
       deployerOptions,
     );
 
-    if (deployer.bytecode === deploymentLock[contract]?.code) {
+    const contractLock = deploymentLock[contract];
+
+    if (
+      deployer.bytecode === contractLock?.code &&
+      JSON.stringify(deploymentArgs) === JSON.stringify(contractLock?.args)
+    ) {
       console.log("contract unchanged, skip deployment");
       return deploymentLock;
     }
@@ -83,7 +88,11 @@ const deployOnlyChanged =
 
     return {
       ...deploymentLock,
-      [contract]: { addr: contractAddress, code: deployer.bytecode },
+      [contract]: {
+        addr: contractAddress,
+        code: deployer.bytecode,
+        args: deploymentArgs,
+      },
     };
   };
 

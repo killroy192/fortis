@@ -26,6 +26,8 @@ abstract contract DataStreamConsumer is
         int192 price;
     }
 
+    event LogData(bytes unverifiedReport, bytes extraData);
+
     string[] private feedIds;
 
     string public constant DATASTREAMS_FEEDLABEL = "feedIDs";
