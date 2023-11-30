@@ -24,8 +24,6 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
     error InvalidRequestsExecution(bytes32 id);
     error FailedRequestsConsumption(bytes32 id);
 
-    event PriceUpdate(int192 indexed price);
-
     IVerifierProxy public immutable verifier;
     RequestsManager public immutable requestManager;
     // blocks from request initialization
@@ -60,21 +58,6 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
     }
 
     function performUpkeep(bytes calldata performData) external override {
-        // (address callbackContract, bytes memory callbackArgs) = abi.decode(
-        //     extraData,
-        //     (address, bytes)
-        // );
-
-        // (
-        //     bytes32 id,
-        //     IRequestsManager.RequestStats memory reqStats
-        // ) = getRequestProps(callbackContract, callbackArgs);
-
-        // // prevent duplicated request execution
-        // if (reqStats.status != IRequestsManager.RequestStatus.Pending) {
-        //     revert InvalidRequestsExecution(id);
-        // }
-
         // Decode the performData bytes passed in by CL Automation.
         // This contains the data returned by your implementation in checkCallback().
         (bytes[] memory signedReports, bytes memory extraData) = abi.decode(
@@ -83,6 +66,21 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
         );
 
         bytes memory unverifiedReport = signedReports[0];
+
+        (address callbackContract, bytes memory callbackArgs) = abi.decode(
+            extraData,
+            (address, bytes)
+        );
+
+        (
+            bytes32 id,
+            IRequestsManager.RequestStats memory reqStats
+        ) = getRequestProps(callbackContract, callbackArgs);
+
+        // prevent duplicated request execution
+        if (reqStats.status != IRequestsManager.RequestStatus.Pending) {
+            revert InvalidRequestsExecution(id);
+        }
 
         (, /* bytes32[3] reportContextData */ bytes memory reportData) = abi
             .decode(unverifiedReport, (bytes32[3], bytes));
@@ -110,27 +108,24 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
         );
 
         // Decode verified report data into BasicReport struct
-        BasicReport memory verifiedReport = abi.decode(
+        BasicReport memory report = abi.decode(
             verifiedReportData,
             (BasicReport)
         );
 
-        // Log price from report
-        emit PriceUpdate(verifiedReport.price);
+        bool success = IOracleConsumerContract(callbackContract).consume(
+            ForwardData({
+                price: report.price,
+                feedType: FeedType.DataStream,
+                forwardArguments: callbackArgs
+            })
+        );
 
-        // bool success = IOracleConsumerContract(callbackContract).consume(
-        //     ForwardData({
-        //         price: report.price,
-        //         feedType: FeedType.DataStream,
-        //         forwardArguments: callbackArgs
-        //     })
-        // );
+        if (!success) {
+            revert FailedRequestsConsumption(id);
+        }
 
-        // if (!success) {
-        //     revert FailedRequestsConsumption(id);
-        // }
-
-        // requestManager.fulfillRequest(id);
+        requestManager.fulfillRequest(id);
     }
 
     function fallbackCall(
