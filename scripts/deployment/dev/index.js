@@ -22,11 +22,12 @@ async function main() {
       "0xb1d4538b4571d411f07960ef2838ce337fe1e80e",
     );
     console.log("done");
-    console.log("fund new oracle");
-    await linkToken.transfer(
-      newImplementation,
-      hre.ethers.parseEther("0.1")
-    );
+    // need to fund proxy
+    // console.log("fund new oracle");
+    // await linkToken.transfer(
+    //   newImplementation,
+    //   hre.ethers.parseEther("0.1")
+    // );
     console.log("trigger test event");
     const consumer = await hre.ethers.getContractAt(
       "MockConsumer",
