@@ -39,8 +39,8 @@ hh-node :; npx hardhat node
 abi :; npx hardhat export-abi
 
 network?=hardhat
-script?=deployment/e2e
+script?=dev
 
-deploy :; npx hardhat run --network $(network) $(script)
+deploy :; npx hardhat run --network $(network) scripts/deployment/$(script)
 
 -include ${FCT_PLUGIN_PATH}/makefile-external

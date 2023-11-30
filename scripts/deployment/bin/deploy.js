@@ -110,17 +110,21 @@ module.exports = async function main(config) {
 
     console.log(`Deployment to ${networkName} has finished`);
 
+    const result = {
+      ...currentDeploymentLock,
+      [networkName]: deploymentResult,
+    }
+
     if (loggedNetworks.includes(networkName)) {
       console.log("update lock file");
       await fsp.writeFile(
         filePath,
-        JSON.stringify({
-          ...currentDeploymentLock,
-          [networkName]: deploymentResult,
-        }),
+        JSON.stringify(result),
       );
     }
     console.log("Done");
+    return deploymentResult;
+    
   } catch (error) {
     console.error(error);
     process.exit(1);

@@ -6,7 +6,7 @@ import {Log} from "@chainlink/contracts/src/v0.8/automation/interfaces/ILogAutom
 
 import {IRewardManager} from "@chainlink/contracts/src/v0.8/llo-feeds/interfaces/IRewardManager.sol";
 
-import {IERC20} from "./interfaces/IERC20.sol";
+import {IERC20} from "src/vendor/@openzeppelin/contracts/token/IERC20.sol";
 import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
 import {IFeeManager} from "./interfaces/IFeeManager.sol";
 import {IOracle} from "./interfaces/IOracle.sol";

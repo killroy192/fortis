@@ -16,8 +16,4 @@ module.exports = [
       },
     },
   },
-  {
-    contract: "MockConsumer",
-    args: [(deploymentLock) => deploymentLock.Oracle.addr],
-  },
-];
+]
