@@ -24,6 +24,8 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
     error InvalidRequestsExecution(bytes32 id);
     error FailedRequestsConsumption(bytes32 id);
 
+    event PriceUpdate(int192 indexed price);
+
     IVerifierProxy public immutable verifier;
     RequestsManager public immutable requestManager;
     // blocks from request initialization
@@ -57,29 +59,39 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
         return true;
     }
 
-    function verifyAndCall(
-        bytes memory unverifiedReport,
-        bytes memory extraData
-    ) internal override {
-        (address callbackContract, bytes memory callbackArgs) = abi.decode(
-            extraData,
-            (address, bytes)
+    function performUpkeep(bytes calldata performData) external override {
+        // (address callbackContract, bytes memory callbackArgs) = abi.decode(
+        //     extraData,
+        //     (address, bytes)
+        // );
+
+        // (
+        //     bytes32 id,
+        //     IRequestsManager.RequestStats memory reqStats
+        // ) = getRequestProps(callbackContract, callbackArgs);
+
+        // // prevent duplicated request execution
+        // if (reqStats.status != IRequestsManager.RequestStatus.Pending) {
+        //     revert InvalidRequestsExecution(id);
+        // }
+
+        // Decode the performData bytes passed in by CL Automation.
+        // This contains the data returned by your implementation in checkCallback().
+        (bytes[] memory signedReports, bytes memory extraData) = abi.decode(
+            performData,
+            (bytes[], bytes)
         );
 
-        (
-            bytes32 id,
-            IRequestsManager.RequestStats memory reqStats
-        ) = getRequestProps(callbackContract, callbackArgs);
-
-        // prevent duplicated request execution
-        if (reqStats.status != IRequestsManager.RequestStatus.Pending) {
-            revert InvalidRequestsExecution(id);
-        }
+        bytes memory unverifiedReport = signedReports[0];
 
         (, /* bytes32[3] reportContextData */ bytes memory reportData) = abi
             .decode(unverifiedReport, (bytes32[3], bytes));
 
+        // Report verification fees
         IFeeManager feeManager = IFeeManager(address(verifier.s_feeManager()));
+        IRewardManager rewardManager = IRewardManager(
+            address(feeManager.i_rewardManager())
+        );
 
         address feeTokenAddress = feeManager.i_linkAddress();
         (Common.Asset memory fee, , ) = feeManager.getFeeAndReward(
@@ -89,30 +101,36 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
         );
 
         // Approve rewardManager to spend this contract's balance in fees
-        IERC20(feeTokenAddress).approve(
-            address(feeManager.i_rewardManager()),
-            fee.amount
+        IERC20(feeTokenAddress).approve(address(rewardManager), fee.amount);
+
+        // Verify the report
+        bytes memory verifiedReportData = verifier.verify(
+            unverifiedReport,
+            abi.encode(feeTokenAddress)
         );
 
-        // Verify & decode report data into BasicReport struct
-        BasicReport memory report = abi.decode(
-            verifier.verify(unverifiedReport, abi.encode(feeTokenAddress)),
+        // Decode verified report data into BasicReport struct
+        BasicReport memory verifiedReport = abi.decode(
+            verifiedReportData,
             (BasicReport)
         );
 
-        bool success = IOracleConsumerContract(callbackContract).consume(
-            ForwardData({
-                price: report.price,
-                feedType: FeedType.DataStream,
-                forwardArguments: callbackArgs
-            })
-        );
+        // Log price from report
+        emit PriceUpdate(verifiedReport.price);
 
-        if (!success) {
-            revert FailedRequestsConsumption(id);
-        }
+        // bool success = IOracleConsumerContract(callbackContract).consume(
+        //     ForwardData({
+        //         price: report.price,
+        //         feedType: FeedType.DataStream,
+        //         forwardArguments: callbackArgs
+        //     })
+        // );
 
-        requestManager.fulfillRequest(id);
+        // if (!success) {
+        //     revert FailedRequestsConsumption(id);
+        // }
+
+        // requestManager.fulfillRequest(id);
     }
 
     function fallbackCall(

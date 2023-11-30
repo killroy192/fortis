@@ -26,7 +26,9 @@ abstract contract DataStreamConsumer is
         int192 price;
     }
 
-    event LogData(bytes unverifiedReport, bytes extraData);
+    struct Quote {
+        address quoteAddress;
+    }
 
     string[] private feedIds;
 
@@ -43,7 +45,7 @@ abstract contract DataStreamConsumer is
     function checkLog(
         Log calldata log,
         bytes memory
-    ) external view returns (bool upkeepNeeded, bytes memory performData) {
+    ) external view returns (bool, bytes memory) {
         revert StreamsLookup(
             DATASTREAMS_FEEDLABEL,
             feedIds,
@@ -66,21 +68,5 @@ abstract contract DataStreamConsumer is
     }
 
     // function will be performed on-chain
-    function performUpkeep(bytes calldata performData) external {
-        // Decode the performData bytes passed in by CL Automation.
-        // This contains the data returned by your implementation in checkCallback().
-        (bytes[] memory signedReports, bytes memory extraData) = abi.decode(
-            performData,
-            (bytes[], bytes)
-        );
-
-        bytes memory unverifiedReport = signedReports[0];
-
-        verifyAndCall(unverifiedReport, extraData);
-    }
-
-    function verifyAndCall(
-        bytes memory unverifiedReport,
-        bytes memory extraData
-    ) internal virtual;
+    function performUpkeep(bytes calldata performData) external virtual;
 }
