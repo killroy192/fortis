@@ -49,6 +49,17 @@ contract SimpleOracleProxy is
         ILogAutomation(implementation).performUpkeep(performData);
     }
 
+    function fallbackCall(
+        address callbackContract,
+        bytes memory callbackArgs
+    ) external returns (bool) {
+        return
+            IOracle(implementation).fallbackCall(
+                callbackContract,
+                callbackArgs
+            );
+    }
+
     function addRequest(
         address callbackContract,
         bytes memory callbackArgs

@@ -22,6 +22,8 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
     error InvalidRequestsExecution(bytes32 id);
     error FailedRequestsConsumption(bytes32 id);
 
+    event AutomationTrigger(address callBackContract, bytes callBackArgs);
+
     IVerifierProxy public immutable verifier;
     RequestsManager public immutable requestManager;
     // blocks from request initialization
@@ -52,6 +54,7 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
             revert DuplicatedRequestCreation(id);
         }
         requestManager.addRequest(id);
+        emit AutomationTrigger(address(this), callbackArgs);
         return true;
     }
 
