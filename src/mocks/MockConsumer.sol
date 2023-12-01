@@ -16,6 +16,8 @@ contract MockConsumer is IOracleConsumerContract {
         address tokenIn;
         address tokenOut;
         uint256 amountIn;
+        uint256 nonce;
+        address sender;
     }
 
     error UnsuccesfullTrigger();
@@ -29,7 +31,9 @@ contract MockConsumer is IOracleConsumerContract {
         CustomRequestParams({
             tokenIn: address(0),
             tokenOut: address(0),
-            amountIn: 100
+            amountIn: 100,
+            nonce: 0,
+            sender: address(0)
         });
 
     constructor(address _oracle) {
@@ -40,8 +44,8 @@ contract MockConsumer is IOracleConsumerContract {
         bool success = IOracle(oracle).addRequest(
             address(this),
             abi.encode(params),
-            0,
-            address(this)
+            params.nonce,
+            params.sender
         );
         if (!success) {
             revert UnsuccesfullTrigger();
@@ -55,8 +59,8 @@ contract MockConsumer is IOracleConsumerContract {
         bool success = IFakeOracle(oracle).addFakeRequest(
             address(this),
             abi.encode(params),
-            0,
-            address(this)
+            params.nonce,
+            params.sender
         );
         if (!success) {
             revert UnsuccesfullTrigger();
