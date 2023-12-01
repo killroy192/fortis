@@ -2,6 +2,7 @@
 pragma solidity ^0.8.16;
 
 import {IOracle} from "src/interfaces/IOracle.sol";
+import {IFakeOracle} from "src/interfaces/IFakeOracle.sol";
 import {IOracleConsumerContract, FeedType, ForwardData} from "src/interfaces/IOracleCallBackContract.sol";
 
 /**
@@ -19,9 +20,6 @@ contract MockConsumer is IOracleConsumerContract {
 
     error UnsuccesfullTrigger();
 
-    event AutomationTrigger(address callBackContract, bytes callBackArgs);
-    event FakeAutomationTrigger(address callBackContract, bytes callBackArgs);
-
     int256 public lastConsumedPrice;
     FeedType public lastConsumedFeedType;
     CustomRequestParams public lastConsumedForwardArguments;
@@ -38,7 +36,7 @@ contract MockConsumer is IOracleConsumerContract {
         oracle = _oracle;
     }
 
-    function addRequest(CustomRequestParams memory params) private {
+    function trigger(CustomRequestParams memory params) public returns (bool) {
         bool success = IOracle(oracle).addRequest(
             address(this),
             abi.encode(params)
@@ -46,19 +44,19 @@ contract MockConsumer is IOracleConsumerContract {
         if (!success) {
             revert UnsuccesfullTrigger();
         }
-    }
-
-    function trigger(CustomRequestParams memory params) public returns (bool) {
-        addRequest(params);
-        emit AutomationTrigger(address(this), abi.encode(params));
         return true;
     }
 
     function triggerFake(
         CustomRequestParams memory params
     ) public returns (bool) {
-        addRequest(params);
-        emit FakeAutomationTrigger(address(this), abi.encode(params));
+        bool success = IFakeOracle(oracle).addFakeRequest(
+            address(this),
+            abi.encode(params)
+        );
+        if (!success) {
+            revert UnsuccesfullTrigger();
+        }
         return true;
     }
 

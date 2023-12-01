@@ -1,8 +1,8 @@
-const config = require('dotenv').config();
+const config = require("dotenv").config();
 
 require("@nomicfoundation/hardhat-foundry");
-require('@nomicfoundation/hardhat-toolbox');
-require('hardhat-abi-exporter');
+require("@nomicfoundation/hardhat-toolbox");
+require("hardhat-abi-exporter");
 
 if (config.error) {
   console.error(config.error);
@@ -11,12 +11,12 @@ if (config.error) {
 const deployerAccounts = [
   config?.parsed?.PRIVATE_KEY ||
     "0x0000000000000000000000000000000000000000000000000000000000000000",
-]
+];
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
-    version: '0.8.16',
+    compilers: [{ version: "0.8.20" }],
     metadata: {
       appendCBOR: false,
     },
@@ -32,16 +32,18 @@ module.exports = {
     },
     anvil: {
       url: config?.parsed?.RPC_URL || "https:random.com",
-      accounts: ["0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"],
+      accounts: [
+        "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+      ],
     },
     "arbitrum-sepolia": {
       url: config?.parsed?.ARBITRUM_SEPOLIA_RPC || "https:random.com",
       accounts: deployerAccounts,
-    }
+    },
   },
   etherscan: {
     apiKey: {
-      "arbitrum-sepolia": config?.parsed?.ABISCAN_API_KEY
+      "arbitrum-sepolia": config?.parsed?.ABISCAN_API_KEY,
     },
     customChains: [
       {
@@ -49,9 +51,9 @@ module.exports = {
         chainId: 421614,
         urls: {
           apiURL: "https://api-sepolia.arbiscan.io/api",
-          browserURL: "https://sepolia-explorer.arbitrum.io"
-        }
-      }
-    ]
-  }
+          browserURL: "https://sepolia-explorer.arbitrum.io",
+        },
+      },
+    ],
+  },
 };
