@@ -54,7 +54,7 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
             revert DuplicatedRequestCreation(id);
         }
         requestManager.addRequest(id);
-        emit AutomationTrigger(address(this), callbackArgs);
+        emit AutomationTrigger(callbackContract, callbackArgs);
         return true;
     }
 

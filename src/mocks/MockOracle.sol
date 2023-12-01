@@ -29,7 +29,7 @@ contract MockOracle is IFakeOracle, Oracle {
             revert DuplicatedRequestCreation(id);
         }
         requestManager.addRequest(id);
-        emit FakeAutomationTrigger(address(this), callbackArgs);
+        emit FakeAutomationTrigger(callbackContract, callbackArgs);
         return true;
     }
 }
