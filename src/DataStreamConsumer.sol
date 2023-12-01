@@ -26,7 +26,7 @@ abstract contract DataStreamConsumer is
         int192 price;
     }
 
-    string[] private feedIds;
+    string[] internal feedIds;
 
     string public constant DATASTREAMS_FEEDLABEL = "feedIDs";
     string public constant DATASTREAMS_QUERYLABEL = "timestamp";
@@ -36,12 +36,10 @@ abstract contract DataStreamConsumer is
         feedIds.push(_feedId);
     }
 
-    // This function uses revert to convey call information.
-    // See https://eips.ethereum.org/EIPS/eip-3668#rationale for details.
     function checkLog(
         Log calldata log,
         bytes memory
-    ) external view returns (bool upkeepNeeded, bytes memory performData) {
+    ) external view returns (bool, bytes memory) {
         revert StreamsLookup(
             DATASTREAMS_FEEDLABEL,
             feedIds,
@@ -51,11 +49,6 @@ abstract contract DataStreamConsumer is
         );
     }
 
-    // The Data Streams report bytes is passed here.
-    // extraData is context data from feed lookup process.
-    // Your contract may include logic to further process this data.
-    // This method is intended only to be simulated off-chain by Automation.
-    // The data returned will then be passed by Automation into performUpkeep
     function checkCallback(
         bytes[] calldata values,
         bytes calldata extraData
@@ -63,22 +56,5 @@ abstract contract DataStreamConsumer is
         return (true, abi.encode(values, extraData));
     }
 
-    // function will be performed on-chain
-    function performUpkeep(bytes calldata performData) external {
-        // Decode the performData bytes passed in by CL Automation.
-        // This contains the data returned by your implementation in checkCallback().
-        (bytes[] memory signedReports, bytes memory extraData) = abi.decode(
-            performData,
-            (bytes[], bytes)
-        );
-
-        bytes memory unverifiedReport = signedReports[0];
-
-        verifyAndCall(unverifiedReport, extraData);
-    }
-
-    function verifyAndCall(
-        bytes memory unverifiedReport,
-        bytes memory extraData
-    ) internal virtual;
+    function performUpkeep(bytes calldata performData) external virtual;
 }

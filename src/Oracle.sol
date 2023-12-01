@@ -6,11 +6,10 @@ import {Log} from "@chainlink/contracts/src/v0.8/automation/interfaces/ILogAutom
 
 import {IRewardManager} from "@chainlink/contracts/src/v0.8/llo-feeds/interfaces/IRewardManager.sol";
 
-import {Request} from "./interfaces/Request.sol";
-import {IERC20} from "./interfaces/IERC20.sol";
+import {IERC20} from "src/vendor/@openzeppelin/contracts/token/IERC20.sol";
 import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
 import {IFeeManager} from "./interfaces/IFeeManager.sol";
-import {IEmitter} from "./interfaces/IEmitter.sol";
+import {IOracle} from "./interfaces/IOracle.sol";
 import {IOracleConsumerContract, ForwardData, FeedType} from "./interfaces/IOracleCallBackContract.sol";
 import {IRequestsManager} from "./interfaces/IRequestsManager.sol";
 
@@ -20,9 +19,8 @@ import {DataStreamConsumer} from "./DataStreamConsumer.sol";
 import {PriceFeedConsumer} from "./PriceFeedConsumer.sol";
 import {RequestsManager} from "./RequestsManager.sol";
 
-contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
-    using RequestLib for Request;
-
+contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
+    error DuplicatedRequestCreation(bytes32 id);
     error InvalidRequestsExecution(bytes32 id);
     error FailedRequestsConsumption(bytes32 id);
 
@@ -43,18 +41,33 @@ contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
         requestTimeout = _requestTimeout;
     }
 
-    function emitRequest(Request memory request) external returns (bool) {
-        bytes32 id = request.generateId();
+    function addRequest(
+        address callbackContract,
+        bytes memory callbackArgs
+    ) external returns (bool) {
+        (
+            bytes32 id,
+            IRequestsManager.RequestStats memory reqStats
+        ) = getRequestProps(callbackContract, callbackArgs);
+        // prevent duplicated request execution
+        if (reqStats.status == IRequestsManager.RequestStatus.Fulfilled) {
+            revert DuplicatedRequestCreation(id);
+        }
         requestManager.addRequest(id);
-        emit AutomationTrigger(id);
         return true;
     }
 
-    function verifyAndCall(
-        bytes memory unverifiedReport,
-        bytes memory extraData
-    ) internal override {
-        (address callBackContract, bytes memory callBackArgs) = abi.decode(
+    function performUpkeep(bytes calldata performData) external override {
+        // Decode the performData bytes passed in by CL Automation.
+        // This contains the data returned by your implementation in checkCallback().
+        (bytes[] memory signedReports, bytes memory extraData) = abi.decode(
+            performData,
+            (bytes[], bytes)
+        );
+
+        bytes memory unverifiedReport = signedReports[0];
+
+        (address callbackContract, bytes memory callbackArgs) = abi.decode(
             extraData,
             (address, bytes)
         );
@@ -62,20 +75,17 @@ contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
         (
             bytes32 id,
             IRequestsManager.RequestStats memory reqStats
-        ) = getRequestProps(
-                Request({
-                    callBackContract: callBackContract,
-                    callBackArgs: callBackArgs
-                })
-            );
+        ) = getRequestProps(callbackContract, callbackArgs);
+
         // prevent duplicated request execution
-        if (reqStats.status == IRequestsManager.RequestStatus.Pending) {
+        if (reqStats.status != IRequestsManager.RequestStatus.Pending) {
             revert InvalidRequestsExecution(id);
         }
 
         (, /* bytes32[3] reportContextData */ bytes memory reportData) = abi
             .decode(unverifiedReport, (bytes32[3], bytes));
 
+        // Report verification fees
         IFeeManager feeManager = IFeeManager(address(verifier.s_feeManager()));
         IRewardManager rewardManager = IRewardManager(
             address(feeManager.i_rewardManager())
@@ -103,11 +113,11 @@ contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
             (BasicReport)
         );
 
-        bool success = IOracleConsumerContract(callBackContract).consume(
+        bool success = IOracleConsumerContract(callbackContract).consume(
             ForwardData({
-                price: int256(int192(report.price)),
+                price: report.price,
                 feedType: FeedType.DataStream,
-                forwardArguments: callBackArgs
+                forwardArguments: callbackArgs
             })
         );
 
@@ -118,11 +128,14 @@ contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
         requestManager.fulfillRequest(id);
     }
 
-    function fallbackCall(Request memory request) external returns (bool) {
+    function fallbackCall(
+        address callbackContract,
+        bytes memory callbackArgs
+    ) external returns (bool) {
         (
             bytes32 id,
             IRequestsManager.RequestStats memory reqStats
-        ) = getRequestProps(request);
+        ) = getRequestProps(callbackContract, callbackArgs);
 
         if (
             reqStats.status != IRequestsManager.RequestStatus.Pending ||
@@ -133,14 +146,13 @@ contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
 
         int256 price = getLatestPrice();
 
-        bool success = IOracleConsumerContract(request.callBackContract)
-            .consume(
-                ForwardData({
-                    price: price,
-                    feedType: FeedType.PriceFeed,
-                    forwardArguments: request.callBackArgs
-                })
-            );
+        bool success = IOracleConsumerContract(callbackContract).consume(
+            ForwardData({
+                price: price,
+                feedType: FeedType.PriceFeed,
+                forwardArguments: callbackArgs
+            })
+        );
 
         if (!success) {
             revert FailedRequestsConsumption(id);
@@ -154,9 +166,10 @@ contract Oracle is IEmitter, DataStreamConsumer, PriceFeedConsumer {
     // Utils
 
     function getRequestProps(
-        Request memory request
+        address callbackContract,
+        bytes memory callbackArgs
     ) public view returns (bytes32, RequestsManager.RequestStats memory) {
-        bytes32 id = request.generateId();
+        bytes32 id = RequestLib.generateId(callbackContract, callbackArgs);
 
         return (id, requestManager.getRequest(id));
     }

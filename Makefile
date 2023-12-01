@@ -26,11 +26,11 @@ test-e2e :; npx hardhat test
 
 snapshot :; forge snapshot
 
-slither :; slither ./contracts 
+slither :; slither ./src 
 
-format :; npx prettier --write src/**/*.sol && npx prettier --write test/**/*.sol
+format :; npx prettier --write src/**/*.sol
 
-lint :; npx solhint src/**/*.sol && npx solhint test/**/*.sol
+lint :; npx solhint src/**/*.sol
 
 anvil :; anvil -m 'test test test test test test test test test test test junk'
 
@@ -38,14 +38,9 @@ hh-node :; npx hardhat node
 
 abi :; npx hardhat export-abi
 
-deploy :; npx hardhat run deployment
+network?=hardhat
+script?=dev
 
-deploy-arbitrum-sepolia :; npx hardhat run --network arbitrum-sepolia deployment
-
-deploy-sepolia :; npx hardhat run --network sepolia deployment
-
-deploy-anvil :; npx hardhat run --network anvil deployment
-
-deploy-localhost :; npx hardhat run --network localhost deployment
+deploy :; npx hardhat run --network $(network) scripts/deployment/$(script)
 
 -include ${FCT_PLUGIN_PATH}/makefile-external

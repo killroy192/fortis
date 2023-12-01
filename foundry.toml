@@ -1,7 +1,7 @@
 [profile.default]
 solc-version = "0.8.16"
 src = 'src'
-test = 'test'
+test = 'src/test'
 out = 'out'
 libs = ['lib']
 gas_reports = ["*"]
