@@ -43,6 +43,6 @@ script?=dev
 
 deploy :; npx hardhat run --network $(network) scripts/deployment/$(script)
 
-run-e2e :; npx hardhat run --network $(network) scripts/e2e/trigger
+run-e2e :; npx hardhat run --network $(network) scripts/e2e/trigger.js
 
 -include ${FCT_PLUGIN_PATH}/makefile-external

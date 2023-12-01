@@ -1,44 +1,30 @@
 const hre = require("hardhat");
+const {
+  getDeploymentLockData,
+} = require("../common");
+
+const findContractByName = (lock, contractName) => {
+  const contractConfig = Object.entries(lock[hre.network.name]).find(
+    ([key]) => key === contractName,
+  );
+  if (contractConfig) {
+    return contractConfig[1];
+  }
+};
 
 async function main() {
-  const proxyLock = await deploy(proxy);
-  const oracleLock = await deploy(oracle);
+  const lock = await getDeploymentLockData();
 
-  const routerContract = await hre.ethers.getContractAt(
-    "MockOracleRouter",
-    proxyLock.MockOracleRouter.addr,
+  const consumer = await hre.ethers.getContractAt(
+    "MockConsumer",
+    findContractByName(lock, "MockConsumer").addr,
   );
 
-  const currentImplementation = await routerContract.implementation();
-  const newImplementation = oracleLock[oracle[oracle.length - 1].contract].addr;
-  if (currentImplementation !== newImplementation) {
-    console.log("start automatic migration");
-    await routerContract.upgradeTo(newImplementation);
-    const linkToken = await hre.ethers.getContractAt(
-      "IERC20",
-      "0xb1d4538b4571d411f07960ef2838ce337fe1e80e",
-    );
-    console.log("done");
-    // need to fund contract under router
-    console.log("fund new oracle");
-    await linkToken.transfer(
-      newImplementation,
-      hre.ethers.parseEther("0.1")
-    );
-    console.log("trigger test event");
-    const consumer = await hre.ethers.getContractAt(
-      "MockConsumer",
-      proxyLock[proxy[proxy.length - 1].contract].addr,
-    );
-
-    await consumer.trigger({
-      tokenIn: hre.ethers.ZeroAddress,
-      tokenOut: hre.ethers.ZeroAddress,
-      amountIn: hre.ethers.parseEther("10"),
-    });
-  }
-
-  console.log("done");
+  await consumer.trigger({
+    tokenIn: hre.ethers.ZeroAddress,
+    tokenOut: hre.ethers.ZeroAddress,
+    amountIn: hre.ethers.parseEther("10"),
+  });
 }
 
 main();
