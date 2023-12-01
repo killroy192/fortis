@@ -39,9 +39,8 @@ hh-node :; npx hardhat node
 abi :; npx hardhat export-abi
 
 network?=hardhat
-script?=dev
 
-deploy :; npx hardhat run --network $(network) scripts/deployment/$(script)
+deploy :; npx hardhat run --network $(network) scripts/deployment/$(network)
 
 run-e2e :; npx hardhat run --network $(network) scripts/e2e/trigger.js
 

@@ -23,7 +23,7 @@ module.exports = {
   },
   paths: {
     sources: "./src",
-    tests: "./e2e",
+    tests: "./integration",
   },
   networks: {
     sepolia: {
@@ -40,10 +40,15 @@ module.exports = {
       url: config?.parsed?.ARBITRUM_SEPOLIA_RPC || "https:random.com",
       accounts: deployerAccounts,
     },
+    "arbitrum-goerli": {
+      url: config?.parsed?.ARBITRUM_GOERLI_RPC || "https:random.com",
+      accounts: deployerAccounts,
+    },
   },
   etherscan: {
     apiKey: {
       "arbitrum-sepolia": config?.parsed?.ABISCAN_API_KEY,
+      "arbitrum-goerli": config?.parsed?.ABISCAN_API_KEY,
     },
     customChains: [
       {
@@ -52,6 +57,14 @@ module.exports = {
         urls: {
           apiURL: "https://api-sepolia.arbiscan.io/api",
           browserURL: "https://sepolia-explorer.arbitrum.io",
+        },
+      },
+      {
+        network: "arbitrum-goerli",
+        chainId: 421613,
+        urls: {
+          apiURL: "https://api-goerli.arbiscan.io/api",
+          browserURL: "https://goerli.arbiscan.io/",
         },
       },
     ],

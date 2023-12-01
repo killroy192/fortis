@@ -4,7 +4,7 @@ const {
 } = require("../common");
 
 const findContractByName = (lock, contractName) => {
-  const contractConfig = Object.entries(lock[hre.network.name]).find(
+  const contractConfig = Object.entries(lock).find(
     ([key]) => key === contractName,
   );
   if (contractConfig) {
@@ -17,7 +17,7 @@ async function main() {
 
   const consumer = await hre.ethers.getContractAt(
     "MockConsumer",
-    findContractByName(lock, "MockConsumer").addr,
+    findContractByName(lock[hre.network.name], "MockConsumer").addr,
   );
 
   await consumer.trigger({
