@@ -16,3 +16,10 @@ struct ForwardData {
 interface IOracleConsumerContract {
     function consume(ForwardData memory forwardData) external returns (bool);
 }
+
+interface IOracle {
+    function addRequest(
+        address callbackContract,
+        bytes memory callbackArgs
+    ) external returns (bool);
+}
