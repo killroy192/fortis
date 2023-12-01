@@ -7,4 +7,9 @@ interface IOracle {
         address callbackContract,
         bytes memory callbackArgs
     ) external returns (bool);
+
+    function fallbackCall(
+        address callbackContract,
+        bytes memory callbackArgs
+    ) external returns (bool);
 }
