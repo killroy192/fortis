@@ -1,7 +1,4 @@
 const hre = require("hardhat");
-const deploy = require("../bin/deploy");
-const proxy = require("./proxy.config");
-const oracle = require("./oracle.config");
 
 async function main() {
   const proxyLock = await deploy(proxy);

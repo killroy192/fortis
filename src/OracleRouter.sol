@@ -26,7 +26,7 @@ contract OracleRouter is
         _implementation = implementation_;
     }
 
-    function implementation() external view returns (address) {
+    function implementation() public view returns (address) {
         return _implementation;
     }
 

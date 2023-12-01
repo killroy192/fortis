@@ -1,11 +1,9 @@
-const hre = require("hardhat");
-
 module.exports = [
   {
-    contract: "OracleRouter",
+    contract: "MockOracleRouter",
   },
   {
     contract: "MockConsumer",
-    args: [(deploymentLock) => deploymentLock.OracleRouter.addr],
+    args: [(deploymentLock) => deploymentLock.MockOracleRouter.addr],
   },
 ];
