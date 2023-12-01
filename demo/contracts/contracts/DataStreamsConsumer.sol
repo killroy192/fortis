@@ -6,6 +6,7 @@ import {ILogAutomation, Log} from "@chainlink/contracts/src/v0.8/automation/inte
 import {StreamsLookupCompatibleInterface} from "@chainlink/contracts/src/v0.8/automation/interfaces/StreamsLookupCompatibleInterface.sol";
 import {ISwapRouter} from "./interfaces/ISwapRouter.sol";
 import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
+import "../../../src/interfaces/IOracleCallBackContract.sol";
 
 /**
  * @title DataStreamsConsumer
@@ -15,7 +16,8 @@ import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
  */
 contract DataStreamsConsumer is
     ILogAutomation,
-    StreamsLookupCompatibleInterface
+    StreamsLookupCompatibleInterface,
+    IOracleConsumerContract
 {
     // ================================================================
     // |                        CONSTANTS                             |
@@ -38,6 +40,7 @@ contract DataStreamsConsumer is
     address public i_linkToken;
     ISwapRouter public i_router;
     IVerifierProxy public i_verifier;
+    IEmitter public i_oracleEmitter;
 
     // ================================================================
     // |                         STRUCTS                              |
@@ -97,12 +100,14 @@ contract DataStreamsConsumer is
         address router,
         address payable verifier,
         address linkToken,
-        string[] memory feedsHex
+        string[] memory feedsHex,
+        address oracleEmitter
     ) public {
         i_router = ISwapRouter(router);
         i_verifier = IVerifierProxy(verifier);
         i_linkToken = linkToken;
         s_feedsHex = feedsHex;
+        i_oracleEmitter = oracleEmitter;
     }
 
     // ================================================================
@@ -124,7 +129,14 @@ contract DataStreamsConsumer is
         uint256 amount,
         string memory feedId
     ) external {
-        emit InitiateTrade(msg.sender, tokenIn, tokenOut, amount, feedId);
+        i_oracleEmitter.emitRequest(address(this), abi.encode(msg.sender, tokenIn, tokenOut, amount, feedId));
+    }
+
+    function consume(ForwardData memory forwardData) external returns (bool) {
+        tradeParams = abi.decode(forwardData.forwardArguments, (TradeParamsStruct));
+        uint256 successfullyTradedTokens = _swapTokens(forwardData.price, tradeParams);
+        emit TradeExecuted(successfullyTradedTokens);
+        return true;
     }
 
     /**
@@ -327,7 +339,7 @@ contract DataStreamsConsumer is
      */
     function _scalePriceToTokenDecimals(
         IERC20 tokenOut,
-        int192 priceFromReport
+        int256 priceFromReport
     ) private view returns (uint256) {
         uint256 pricefeedDecimals = 18;
         uint8 tokenOutDecimals = tokenOut.decimals();
@@ -350,13 +362,13 @@ contract DataStreamsConsumer is
      * @return The amount of tokens received after the swap.
      */
     function _swapTokens(
-        Report memory verifiedReport,
+        int256 price,
         TradeParamsStruct memory tradeParams
     ) private returns (uint256) {
         uint8 inputTokenDecimals = IERC20(tradeParams.tokenIn).decimals();
         uint256 priceForOneToken = _scalePriceToTokenDecimals(
             IERC20(tradeParams.tokenOut),
-            verifiedReport.benchmark
+            price
         );
 
         uint256 outputAmount = (priceForOneToken * tradeParams.amountIn) /
