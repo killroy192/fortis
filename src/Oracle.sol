@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import {Common} from "@chainlink/contracts/src/v0.8/libraries/Common.sol";
 import {Log} from "@chainlink/contracts/src/v0.8/automation/interfaces/ILogAutomation.sol";
 
-import {IRewardManager} from "@chainlink/contracts/src/v0.8/llo-feeds/interfaces/IRewardManager.sol";
-
-import {IERC20} from "src/vendor/@openzeppelin/contracts/token/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
+import {IAsset} from "./interfaces/IAsset.sol";
 import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
 import {IFeeManager} from "./interfaces/IFeeManager.sol";
 import {IOracle} from "./interfaces/IOracle.sol";
@@ -87,19 +85,19 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
 
         // Report verification fees
         IFeeManager feeManager = IFeeManager(address(verifier.s_feeManager()));
-        IRewardManager rewardManager = IRewardManager(
-            address(feeManager.i_rewardManager())
-        );
 
         address feeTokenAddress = feeManager.i_linkAddress();
-        (Common.Asset memory fee, , ) = feeManager.getFeeAndReward(
+        (IAsset memory fee, , ) = feeManager.getFeeAndReward(
             address(this),
             reportData,
             feeTokenAddress
         );
 
         // Approve rewardManager to spend this contract's balance in fees
-        IERC20(feeTokenAddress).approve(address(rewardManager), fee.amount);
+        IERC20(feeTokenAddress).approve(
+            address(feeManager.i_rewardManager()),
+            fee.amount
+        );
 
         // Verify the report
         bytes memory verifiedReportData = verifier.verify(
@@ -173,6 +171,4 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
 
         return (id, requestManager.getRequest(id));
     }
-
-    fallback() external payable {}
 }

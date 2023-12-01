@@ -41,12 +41,18 @@ const deployOnlyChanged =
       deployerOptions?.libs,
     );
 
-    const deploymentArgs = args.map((arg) => {
+    console.log("prepare deployment arguments");
+
+    const getDeploymentArgs = await args.map(async (arg) => {
       if (typeof arg === "function") {
         return arg(deploymentLock);
       }
       return arg;
     });
+
+    console.log(getDeploymentArgs);
+
+    const deploymentArgs = await Promise.all(getDeploymentArgs);
 
     console.log("deployerOptions", deployerOptions);
     console.log("deploymentArgs", deploymentArgs);
@@ -113,18 +119,14 @@ module.exports = async function main(config) {
     const result = {
       ...currentDeploymentLock,
       [networkName]: deploymentResult,
-    }
+    };
 
     if (loggedNetworks.includes(networkName)) {
       console.log("update lock file");
-      await fsp.writeFile(
-        filePath,
-        JSON.stringify(result),
-      );
+      await fsp.writeFile(filePath, JSON.stringify(result));
     }
     console.log("Done");
     return deploymentResult;
-    
   } catch (error) {
     console.error(error);
     process.exit(1);

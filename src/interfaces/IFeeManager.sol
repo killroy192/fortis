@@ -2,14 +2,14 @@
 
 pragma solidity ^0.8.16;
 
-import {Common} from "@chainlink/contracts/src/v0.8/libraries/Common.sol";
+import {IAsset} from "./IAsset.sol";
 
 interface IFeeManager {
     function getFeeAndReward(
         address subscriber,
         bytes memory unverifiedReport,
         address quoteAddress
-    ) external returns (Common.Asset memory, Common.Asset memory, uint256);
+    ) external returns (IAsset memory, IAsset memory, uint256);
 
     function i_linkAddress() external view returns (address);
 
