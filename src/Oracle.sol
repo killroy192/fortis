@@ -22,7 +22,12 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
     error InvalidRequestsExecution(bytes32 id);
     error FailedRequestsConsumption(bytes32 id);
 
-    event AutomationTrigger(address callBackContract, bytes callBackArgs);
+    event AutomationTrigger(
+        address callBackContract,
+        bytes callBackArgs,
+        uint256 nonce,
+        address sender
+    );
 
     IVerifierProxy public immutable verifier;
     RequestsManager public immutable requestManager;
@@ -43,18 +48,20 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
 
     function addRequest(
         address callbackContract,
-        bytes memory callbackArgs
+        bytes memory callbackArgs,
+        uint256 nonce,
+        address sender
     ) external returns (bool) {
         (
             bytes32 id,
             IRequestsManager.RequestStats memory reqStats
-        ) = getRequestProps(callbackContract, callbackArgs);
+        ) = getRequestProps(callbackContract, callbackArgs, nonce, sender);
         // prevent duplicated request execution
-        if (reqStats.status == IRequestsManager.RequestStatus.Fulfilled) {
+        if (reqStats.status == IRequestsManager.RequestStatus.Pending) {
             revert DuplicatedRequestCreation(id);
         }
         requestManager.addRequest(id);
-        emit AutomationTrigger(callbackContract, callbackArgs);
+        emit AutomationTrigger(callbackContract, callbackArgs, nonce, sender);
         return true;
     }
 
@@ -68,15 +75,17 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
 
         bytes memory unverifiedReport = signedReports[0];
 
-        (address callbackContract, bytes memory callbackArgs) = abi.decode(
-            extraData,
-            (address, bytes)
-        );
+        (
+            address callbackContract,
+            bytes memory callbackArgs,
+            uint256 nonce,
+            address sender
+        ) = abi.decode(extraData, (address, bytes, uint256, address));
 
         (
             bytes32 id,
             IRequestsManager.RequestStats memory reqStats
-        ) = getRequestProps(callbackContract, callbackArgs);
+        ) = getRequestProps(callbackContract, callbackArgs, nonce, sender);
 
         // prevent duplicated request execution
         if (reqStats.status != IRequestsManager.RequestStatus.Pending) {
@@ -131,12 +140,14 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
 
     function fallbackCall(
         address callbackContract,
-        bytes memory callbackArgs
+        bytes memory callbackArgs,
+        uint256 nonce,
+        address sender
     ) external returns (bool) {
         (
             bytes32 id,
             IRequestsManager.RequestStats memory reqStats
-        ) = getRequestProps(callbackContract, callbackArgs);
+        ) = getRequestProps(callbackContract, callbackArgs, nonce, sender);
 
         if (
             reqStats.status != IRequestsManager.RequestStatus.Pending ||
@@ -168,9 +179,16 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
 
     function getRequestProps(
         address callbackContract,
-        bytes memory callbackArgs
+        bytes memory callbackArgs,
+        uint256 nonce,
+        address sender
     ) public view returns (bytes32, RequestsManager.RequestStats memory) {
-        bytes32 id = RequestLib.generateId(callbackContract, callbackArgs);
+        bytes32 id = RequestLib.generateId(
+            callbackContract,
+            callbackArgs,
+            nonce,
+            sender
+        );
 
         return (id, requestManager.getRequest(id));
     }

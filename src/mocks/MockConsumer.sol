@@ -36,10 +36,15 @@ contract MockConsumer is IOracleConsumerContract {
         oracle = _oracle;
     }
 
-    function trigger(CustomRequestParams memory params) public returns (bool) {
+    function trigger(
+        CustomRequestParams memory params,
+        uint256 nonce
+    ) public returns (bool) {
         bool success = IOracle(oracle).addRequest(
             address(this),
-            abi.encode(params)
+            abi.encode(params),
+            nonce,
+            msg.sender
         );
         if (!success) {
             revert UnsuccesfullTrigger();
@@ -48,11 +53,14 @@ contract MockConsumer is IOracleConsumerContract {
     }
 
     function triggerFake(
-        CustomRequestParams memory params
+        CustomRequestParams memory params,
+        uint256 nonce
     ) public returns (bool) {
         bool success = IFakeOracle(oracle).addFakeRequest(
             address(this),
-            abi.encode(params)
+            abi.encode(params),
+            nonce,
+            msg.sender
         );
         if (!success) {
             revert UnsuccesfullTrigger();
@@ -61,11 +69,11 @@ contract MockConsumer is IOracleConsumerContract {
     }
 
     function triggerHardcoded() external returns (bool) {
-        return trigger(hardcodedRequestParams);
+        return trigger(hardcodedRequestParams, 0);
     }
 
     function triggerFakeHardcoded() external returns (bool) {
-        return triggerFake(hardcodedRequestParams);
+        return triggerFake(hardcodedRequestParams, 0);
     }
 
     function consume(ForwardData memory forwardData) external returns (bool) {

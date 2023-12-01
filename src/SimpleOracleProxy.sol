@@ -51,21 +51,32 @@ contract SimpleOracleProxy is
 
     function fallbackCall(
         address callbackContract,
-        bytes memory callbackArgs
+        bytes memory callbackArgs,
+        uint256 nonce,
+        address sender
     ) external returns (bool) {
         return
             IOracle(implementation).fallbackCall(
                 callbackContract,
-                callbackArgs
+                callbackArgs,
+                nonce,
+                sender
             );
     }
 
     function addRequest(
         address callbackContract,
-        bytes memory callbackArgs
+        bytes memory callbackArgs,
+        uint256 nonce,
+        address sender
     ) external returns (bool) {
         return
-            IOracle(implementation).addRequest(callbackContract, callbackArgs);
+            IOracle(implementation).addRequest(
+                callbackContract,
+                callbackArgs,
+                nonce,
+                sender
+            );
     }
 
     fallback() external payable {}
