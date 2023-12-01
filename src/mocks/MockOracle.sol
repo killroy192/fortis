@@ -6,7 +6,12 @@ import {IFakeOracle} from "src/interfaces/IFakeOracle.sol";
 import {IRequestsManager} from "src/interfaces/IRequestsManager.sol";
 
 contract MockOracle is IFakeOracle, Oracle {
-    event FakeAutomationTrigger(address callBackContract, bytes callBackArgs);
+    event FakeAutomationTrigger(
+        address callBackContract,
+        bytes callBackArgs,
+        uint256 nonce,
+        address sender
+    );
 
     // Find a complete list of IDs and verifiers at https://docs.chain.link/data-streams/stream-ids
     constructor(
@@ -18,18 +23,25 @@ contract MockOracle is IFakeOracle, Oracle {
 
     function addFakeRequest(
         address callbackContract,
-        bytes memory callbackArgs
+        bytes memory callbackArgs,
+        uint256 nonce,
+        address sender
     ) external returns (bool) {
         (
             bytes32 id,
             IRequestsManager.RequestStats memory reqStats
-        ) = getRequestProps(callbackContract, callbackArgs);
+        ) = getRequestProps(callbackContract, callbackArgs, nonce, sender);
         // prevent duplicated request execution
         if (reqStats.status == IRequestsManager.RequestStatus.Fulfilled) {
             revert DuplicatedRequestCreation(id);
         }
         requestManager.addRequest(id);
-        emit FakeAutomationTrigger(callbackContract, callbackArgs);
+        emit FakeAutomationTrigger(
+            callbackContract,
+            callbackArgs,
+            nonce,
+            sender
+        );
         return true;
     }
 }

@@ -39,7 +39,9 @@ contract MockConsumer is IOracleConsumerContract {
     function trigger(CustomRequestParams memory params) public returns (bool) {
         bool success = IOracle(oracle).addRequest(
             address(this),
-            abi.encode(params)
+            abi.encode(params),
+            0,
+            address(this)
         );
         if (!success) {
             revert UnsuccesfullTrigger();
@@ -52,7 +54,9 @@ contract MockConsumer is IOracleConsumerContract {
     ) public returns (bool) {
         bool success = IFakeOracle(oracle).addFakeRequest(
             address(this),
-            abi.encode(params)
+            abi.encode(params),
+            0,
+            address(this)
         );
         if (!success) {
             revert UnsuccesfullTrigger();
