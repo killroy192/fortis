@@ -16,8 +16,6 @@ contract MockConsumer is IOracleConsumerContract {
         address tokenIn;
         address tokenOut;
         uint256 amountIn;
-        uint256 nonce;
-        address sender;
     }
 
     error UnsuccesfullTrigger();
@@ -31,21 +29,22 @@ contract MockConsumer is IOracleConsumerContract {
         CustomRequestParams({
             tokenIn: address(0),
             tokenOut: address(0),
-            amountIn: 100,
-            nonce: 0,
-            sender: address(0)
+            amountIn: 100
         });
 
     constructor(address _oracle) {
         oracle = _oracle;
     }
 
-    function trigger(CustomRequestParams memory params) public returns (bool) {
+    function trigger(
+        CustomRequestParams memory params,
+        uint256 nonce
+    ) public returns (bool) {
         bool success = IOracle(oracle).addRequest(
             address(this),
             abi.encode(params),
-            params.nonce,
-            params.sender
+            nonce,
+            msg.sender
         );
         if (!success) {
             revert UnsuccesfullTrigger();
@@ -54,13 +53,14 @@ contract MockConsumer is IOracleConsumerContract {
     }
 
     function triggerFake(
-        CustomRequestParams memory params
+        CustomRequestParams memory params,
+        uint256 nonce
     ) public returns (bool) {
         bool success = IFakeOracle(oracle).addFakeRequest(
             address(this),
             abi.encode(params),
-            params.nonce,
-            params.sender
+            nonce,
+            msg.sender
         );
         if (!success) {
             revert UnsuccesfullTrigger();
@@ -69,11 +69,11 @@ contract MockConsumer is IOracleConsumerContract {
     }
 
     function triggerHardcoded() external returns (bool) {
-        return trigger(hardcodedRequestParams);
+        return trigger(hardcodedRequestParams, 0);
     }
 
     function triggerFakeHardcoded() external returns (bool) {
-        return triggerFake(hardcodedRequestParams);
+        return triggerFake(hardcodedRequestParams, 0);
     }
 
     function consume(ForwardData memory forwardData) external returns (bool) {
