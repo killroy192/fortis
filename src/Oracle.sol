@@ -68,19 +68,19 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
     function performUpkeep(bytes calldata performData) external override {
         // Decode the performData bytes passed in by CL Automation.
         // This contains the data returned by your implementation in checkCallback().
-        (
-            bytes[] memory signedReports,
-            bytes memory extraData,
-            uint256 nonce,
-            address sender
-        ) = abi.decode(performData, (bytes[], bytes, uint256, address));
+        (bytes[] memory signedReports, bytes memory extraData) = abi.decode(
+            performData,
+            (bytes[], bytes)
+        );
 
         bytes memory unverifiedReport = signedReports[0];
 
-        (address callbackContract, bytes memory callbackArgs) = abi.decode(
-            extraData,
-            (address, bytes)
-        );
+        (
+            address callbackContract,
+            bytes memory callbackArgs,
+            uint256 nonce,
+            address sender
+        ) = abi.decode(extraData, (address, bytes, uint256, address));
 
         (
             bytes32 id,
