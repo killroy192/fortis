@@ -12,7 +12,6 @@ import Link from "next/link";
 import { SocketProvider } from "./socket-provider";
 import { DatafeedProvider } from "./datafeed-provider";
 import { Toaster } from "@/components/ui/toaster";
-import GoogleTag from "@/components/google-tag";
 import MobileConnectWallet from "@/components/mobile-connect-wallet";
 import { isTradeEnabled } from "@/config/trade";
 
@@ -169,7 +168,7 @@ export default function RootLayout({
                   </div>
                   <div className="mb-4 mt-6 rounded-md border bg-[rgb(24,29,41)]/60 p-10 md:mb-16">
                     <h3 className="mb-6 text-xl font-medium">Disclaimer</h3>
-                    <p className="italic text-sm">
+                    <p className="text-sm italic">
                       This demo represents an educational example to use a
                       Chainlink system, product, or service and is provided to
                       demonstrate how to interact with Chainlink’s systems,
@@ -191,7 +190,6 @@ export default function RootLayout({
             </Providers>
           </SocketProvider>
         </DatafeedProvider>
-        <GoogleTag />
       </body>
     </html>
   );
