@@ -6,7 +6,7 @@ import {ILogAutomation, Log} from "@chainlink/contracts/src/v0.8/automation/inte
 import {StreamsLookupCompatibleInterface} from "@chainlink/contracts/src/v0.8/automation/interfaces/StreamsLookupCompatibleInterface.sol";
 import {ISwapRouter} from "./interfaces/ISwapRouter.sol";
 import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
-import "./IOracleCallBackContract.sol";
+import "./OracleInterfaces.sol";
 
 /**
  * @title DataStreamsConsumer
@@ -51,7 +51,7 @@ contract DataStreamsConsumer is IOracleConsumerContract {
         address tokenOut,
         uint256 amount,
         string memory feedId,
-        uint256 memory nonce
+        uint256 nonce
     ) external {
         i_oracleEmitter.addRequest(
             address(this),
