@@ -25,13 +25,6 @@ contract SimpleConsumer is IOracleConsumerContract {
     CustomRequestParams public lastConsumedForwardArguments;
     address public immutable oracle;
 
-    CustomRequestParams private hardcodedRequestParams =
-        CustomRequestParams({
-            tokenIn: address(0),
-            tokenOut: address(0),
-            amountIn: 100
-        });
-
     constructor(address _oracle) {
         oracle = _oracle;
     }
@@ -66,14 +59,6 @@ contract SimpleConsumer is IOracleConsumerContract {
             revert UnsuccesfullTrigger();
         }
         return true;
-    }
-
-    function triggerHardcoded() external returns (bool) {
-        return trigger(hardcodedRequestParams, block.number);
-    }
-
-    function triggerFakeHardcoded() external returns (bool) {
-        return triggerFake(hardcodedRequestParams, block.number);
     }
 
     function consume(ForwardData memory forwardData) external returns (bool) {
