@@ -7,38 +7,38 @@ async function main() {
   const proxyLock = await deploy(proxy);
   const oracleLock = await deploy(oracle);
 
-  const proxyContract = await hre.ethers.getContractAt(
-    "UpgradeableBeacon",
-    proxyLock.UpgradeableBeacon.addr,
+  const routerContract = await hre.ethers.getContractAt(
+    "MockOracleRouter",
+    proxyLock.MockOracleRouter.addr,
   );
 
-  const currentImplementation = await proxyContract.implementation();
+  const currentImplementation = await routerContract.implementation();
   const newImplementation = oracleLock[oracle[oracle.length - 1].contract].addr;
   if (currentImplementation !== newImplementation) {
     console.log("start automatic migration");
-    await proxyContract.upgradeTo(newImplementation);
+    await routerContract.upgradeTo(newImplementation);
     const linkToken = await hre.ethers.getContractAt(
       "IERC20",
-      "0xb1d4538b4571d411f07960ef2838ce337fe1e80e",
+      "0xd14838A68E8AFBAdE5efb411d5871ea0011AFd28",
     );
     console.log("done");
-    // need to fund proxy
-    // console.log("fund new oracle");
-    // await linkToken.transfer(
-    //   newImplementation,
-    //   hre.ethers.parseEther("0.1")
-    // );
+    // need to fund contract under router
+    console.log("fund new oracle");
+    await linkToken.transfer(newImplementation, hre.ethers.parseEther("0.1"));
     console.log("trigger test event");
     const consumer = await hre.ethers.getContractAt(
       "MockConsumer",
       proxyLock[proxy[proxy.length - 1].contract].addr,
     );
 
-    await consumer.trigger({
-      tokenIn: hre.ethers.ZeroAddress,
-      tokenOut: hre.ethers.ZeroAddress,
-      amountIn: hre.ethers.parseEther("10"),
-    });
+    await consumer.trigger(
+      {
+        tokenIn: hre.ethers.ZeroAddress,
+        tokenOut: hre.ethers.ZeroAddress,
+        amountIn: hre.ethers.parseEther("10"),
+      },
+      Math.ceil(Math.random() * 100),
+    );
   }
 
   console.log("done");

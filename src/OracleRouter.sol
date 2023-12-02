@@ -7,31 +7,34 @@ import {ILogAutomation, Log} from "@chainlink/contracts/src/v0.8/automation/inte
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IOracle} from "./interfaces/IOracle.sol";
 
-contract SimpleOracleProxy is
+/*
+ * Contract for dev porposes
+ * @note keeper fundint won't work when OracleRouter is used
+ */
+contract OracleRouter is
     Ownable,
     IOracle,
     ILogAutomation,
     StreamsLookupCompatibleInterface
 {
-    address private implementation;
+    address private _implementation;
 
-    constructor(address _implementation) Ownable(msg.sender) {
-        implementation = _implementation;
+    // solhint-disable-next-line no-empty-blocks
+    constructor() Ownable(msg.sender) {}
+
+    function upgradeTo(address implementation_) external onlyOwner {
+        _implementation = implementation_;
     }
 
-    function upgrade(address _implementation) external onlyOwner {
-        implementation = _implementation;
-    }
-
-    function currentImplementation() external view returns (address) {
-        return implementation;
+    function implementation() public view returns (address) {
+        return _implementation;
     }
 
     function checkLog(
         Log calldata log,
         bytes memory checkData
     ) external returns (bool, bytes memory) {
-        return ILogAutomation(implementation).checkLog(log, checkData);
+        return ILogAutomation(_implementation).checkLog(log, checkData);
     }
 
     function checkCallback(
@@ -39,14 +42,14 @@ contract SimpleOracleProxy is
         bytes calldata extraData
     ) external view returns (bool, bytes memory) {
         return
-            StreamsLookupCompatibleInterface(implementation).checkCallback(
+            StreamsLookupCompatibleInterface(_implementation).checkCallback(
                 values,
                 extraData
             );
     }
 
     function performUpkeep(bytes calldata performData) external {
-        ILogAutomation(implementation).performUpkeep(performData);
+        ILogAutomation(_implementation).performUpkeep(performData);
     }
 
     function fallbackCall(
@@ -56,7 +59,7 @@ contract SimpleOracleProxy is
         address sender
     ) external returns (bool) {
         return
-            IOracle(implementation).fallbackCall(
+            IOracle(_implementation).fallbackCall(
                 callbackContract,
                 callbackArgs,
                 nonce,
@@ -71,7 +74,7 @@ contract SimpleOracleProxy is
         address sender
     ) external returns (bool) {
         return
-            IOracle(implementation).addRequest(
+            IOracle(_implementation).addRequest(
                 callbackContract,
                 callbackArgs,
                 nonce,
@@ -80,4 +83,7 @@ contract SimpleOracleProxy is
     }
 
     fallback() external payable {}
+
+    // solhint-disable-next-line no-empty-blocks
+    receive() external payable {}
 }

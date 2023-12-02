@@ -1,19 +1,9 @@
-const fsp = require("node:fs/promises");
-const fs = require("node:fs");
-const path = require("node:path");
 const hre = require("hardhat");
-
-const loggedNetworks = ["arbitrum-sepolia"];
-
-const isLoggedNetwork = () => loggedNetworks.includes(hre.network.name);
-
-const getDeploymentLockData = async (filePath) => {
-  const isExist = fs.existsSync(filePath);
-  // skip localhost & one-time deployments
-  return isExist && isLoggedNetwork()
-    ? JSON.parse(await fsp.readFile(filePath))
-    : {};
-};
+const {
+  isLoggedNetwork,
+  getDeploymentLockData,
+  updateDeploymentLockData,
+} = require("../../common");
 
 const getLibrariesDynamically = (deploymentLock, config = {}) =>
   Object.entries(config).reduce((acc, [libName, getter]) => {
@@ -105,9 +95,8 @@ const deployOnlyChanged =
 module.exports = async function main(config) {
   try {
     const networkName = hre.network.name;
-    const filePath = path.resolve("deployment-lock.json");
 
-    const currentDeploymentLock = await getDeploymentLockData(filePath);
+    const currentDeploymentLock = await getDeploymentLockData();
 
     const deploymentResult = await config.reduce(
       (acc, c) => acc.then(deployOnlyChanged(c)),
@@ -121,10 +110,8 @@ module.exports = async function main(config) {
       [networkName]: deploymentResult,
     };
 
-    if (loggedNetworks.includes(networkName)) {
-      console.log("update lock file");
-      await fsp.writeFile(filePath, JSON.stringify(result));
-    }
+    await updateDeploymentLockData(result);
+
     console.log("Done");
     return deploymentResult;
   } catch (error) {

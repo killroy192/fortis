@@ -69,11 +69,11 @@ contract MockConsumer is IOracleConsumerContract {
     }
 
     function triggerHardcoded() external returns (bool) {
-        return trigger(hardcodedRequestParams, 0);
+        return trigger(hardcodedRequestParams, block.number);
     }
 
     function triggerFakeHardcoded() external returns (bool) {
-        return triggerFake(hardcodedRequestParams, 0);
+        return triggerFake(hardcodedRequestParams, block.number);
     }
 
     function consume(ForwardData memory forwardData) external returns (bool) {
