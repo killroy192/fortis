@@ -1,24 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import {IERC20} from "@uniswap/v2-core/contracts/interfaces/IERC20.sol";
-import {ILogAutomation, Log} from "@chainlink/contracts/src/v0.8/automation/interfaces/ILogAutomation.sol";
-import {StreamsLookupCompatibleInterface} from "@chainlink/contracts/src/v0.8/automation/interfaces/StreamsLookupCompatibleInterface.sol";
-import {ISwapRouter} from "./interfaces/ISwapRouter.sol";
-import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
-import "./OracleInterfaces.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IOracle} from "src/interfaces/IOracle.sol";
+import {IOracleConsumerContract, ForwardData} from "src/interfaces/IOracleCallBackContract.sol";
+import {IFakedOracle} from "./fakers/IFakedOracle.sol";
+import {ISwapRouter} from "./ISwapRouter.sol";
 
 /**
- * @title DataStreamsConsumer
- * @dev This contract is a Chainlink Data Streams consumer.
- * This contract provides low-latency delivery of low-latency delivery of market data.
- * These reports can be verified onchain to verify their integrity.
+ * @title SwapApp
  */
-contract DataStreamsConsumer is IOracleConsumerContract {
+contract SwapApp is IOracleConsumerContract {
     uint24 public constant FEE = 3000;
 
-    ISwapRouter public i_router;
-    IOracle public i_oracleEmitter;
+    ISwapRouter public immutable i_router;
+    address public immutable oracle;
 
     struct TradeParamsStruct {
         address recipient;
@@ -30,12 +26,9 @@ contract DataStreamsConsumer is IOracleConsumerContract {
 
     event TradeExecuted(uint256 tokensAmount);
 
-    function initializer(
-        address router,
-        address oracleEmitter
-    ) public {
-        i_router = ISwapRouter(router);
-        i_oracleEmitter = IOracle(oracleEmitter);
+    constructor(address _router, address _oracle) {
+        i_router = ISwapRouter(_router);
+        oracle = _oracle;
     }
 
     function trade(
@@ -45,7 +38,22 @@ contract DataStreamsConsumer is IOracleConsumerContract {
         string memory feedId,
         uint256 nonce
     ) external {
-        i_oracleEmitter.addRequest(
+        IOracle(oracle).addRequest(
+            address(this),
+            abi.encode(msg.sender, tokenIn, tokenOut, amount, feedId),
+            nonce,
+            msg.sender
+        );
+    }
+
+    function notAutomatedTrade(
+        address tokenIn,
+        address tokenOut,
+        uint256 amount,
+        string memory feedId,
+        uint256 nonce
+    ) external {
+        IFakedOracle(oracle).addFakeRequest(
             address(this),
             abi.encode(msg.sender, tokenIn, tokenOut, amount, feedId),
             nonce,
@@ -54,15 +62,22 @@ contract DataStreamsConsumer is IOracleConsumerContract {
     }
 
     function consume(ForwardData memory forwardData) external returns (bool) {
-        TradeParamsStruct memory tradeParams = abi.decode(forwardData.forwardArguments, (TradeParamsStruct));
-        uint256 successfullyTradedTokens = _swapTokens(forwardData.price, tradeParams);
+        TradeParamsStruct memory tradeParams = abi.decode(
+            forwardData.forwardArguments,
+            (TradeParamsStruct)
+        );
+        uint256 successfullyTradedTokens = _swapTokens(
+            forwardData.price,
+            tradeParams
+        );
         emit TradeExecuted(successfullyTradedTokens);
         return true;
     }
+
     //swap logic
 
     function _scalePriceToTokenDecimals(
-        IERC20 tokenOut,
+        IERC20Metadata tokenOut,
         int256 priceFromReport
     ) private view returns (uint256) {
         uint256 pricefeedDecimals = 18;
@@ -75,25 +90,27 @@ contract DataStreamsConsumer is IOracleConsumerContract {
             return uint256(priceFromReport) * 10 ** difference;
         }
     }
+
     function _swapTokens(
         int256 price,
         TradeParamsStruct memory tradeParams
     ) private returns (uint256) {
-        uint8 inputTokenDecimals = IERC20(tradeParams.tokenIn).decimals();
+        uint8 inputTokenDecimals = IERC20Metadata(tradeParams.tokenIn)
+            .decimals();
         uint256 priceForOneToken = _scalePriceToTokenDecimals(
-            IERC20(tradeParams.tokenOut),
+            IERC20Metadata(tradeParams.tokenOut),
             price
         );
 
         uint256 outputAmount = (priceForOneToken * tradeParams.amountIn) /
             10 ** inputTokenDecimals;
 
-        IERC20(tradeParams.tokenIn).transferFrom(
+        IERC20Metadata(tradeParams.tokenIn).transferFrom(
             tradeParams.recipient,
             address(this),
             tradeParams.amountIn
         );
-        IERC20(tradeParams.tokenIn).approve(
+        IERC20Metadata(tradeParams.tokenIn).approve(
             address(i_router),
             tradeParams.amountIn
         );
@@ -111,5 +128,7 @@ contract DataStreamsConsumer is IOracleConsumerContract {
 
         return i_router.exactInputSingle(params);
     }
+
+    // solhint-disable-next-line no-empty-blocks
     receive() external payable {}
 }

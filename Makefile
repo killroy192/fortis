@@ -44,4 +44,6 @@ deploy-example :; npx hardhat run --network $(network) scripts/deployment/exampl
 
 tes :; npx hardhat run --network $(network) scripts/e2e/example/trigger.js
 
+trade :; npx hardhat run --network arbitrum-goerli scripts/e2e/example/trade.js
+
 -include ${FCT_PLUGIN_PATH}/makefile-external

@@ -32,4 +32,11 @@ module.exports = [
     contract: "SimpleConsumer",
     args: [(deploymentLock) => deploymentLock.FakedOracleProxy.addr],
   },
+  {
+    contract: "SwapApp",
+    args: [
+      "0xab7664500b19a7a2362Ab26081e6DfB971B6F1B0",
+      (deploymentLock) => deploymentLock.FakedOracleProxy.addr
+    ],
+  },
 ];
