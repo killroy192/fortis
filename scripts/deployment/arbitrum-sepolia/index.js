@@ -24,21 +24,21 @@ async function main() {
     console.log("done");
     // need to fund contract under router
     console.log("fund new oracle");
-    await linkToken.transfer(
-      newImplementation,
-      hre.ethers.parseEther("0.1")
-    );
+    await linkToken.transfer(newImplementation, hre.ethers.parseEther("0.1"));
     console.log("trigger test event");
     const consumer = await hre.ethers.getContractAt(
       "MockConsumer",
       proxyLock[proxy[proxy.length - 1].contract].addr,
     );
 
-    await consumer.trigger({
-      tokenIn: hre.ethers.ZeroAddress,
-      tokenOut: hre.ethers.ZeroAddress,
-      amountIn: hre.ethers.parseEther("10"),
-    });
+    await consumer.trigger(
+      {
+        tokenIn: hre.ethers.ZeroAddress,
+        tokenOut: hre.ethers.ZeroAddress,
+        amountIn: hre.ethers.parseEther("10"),
+      },
+      Math.ceil(Math.random() * 100),
+    );
   }
 
   console.log("done");

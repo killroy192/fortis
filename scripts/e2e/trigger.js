@@ -1,7 +1,5 @@
 const hre = require("hardhat");
-const {
-  getDeploymentLockData,
-} = require("../common");
+const { getDeploymentLockData } = require("../common");
 
 const findContractByName = (lock, contractName) => {
   const contractConfig = Object.entries(lock).find(
@@ -20,11 +18,14 @@ async function main() {
     findContractByName(lock[hre.network.name], "MockConsumer").addr,
   );
 
-  await consumer.trigger({
-    tokenIn: hre.ethers.ZeroAddress,
-    tokenOut: hre.ethers.ZeroAddress,
-    amountIn: hre.ethers.parseEther("10"),
-  });
+  await consumer.trigger(
+    {
+      tokenIn: hre.ethers.ZeroAddress,
+      tokenOut: hre.ethers.ZeroAddress,
+      amountIn: hre.ethers.parseEther("10"),
+    },
+    Math.ceil(Math.random() * 100),
+  );
 }
 
 main();
