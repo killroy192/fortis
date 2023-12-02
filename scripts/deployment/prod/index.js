@@ -1,4 +1,4 @@
 
 const config = require('./config');
 
-require("../bin/deploy")(config);
+require("../deploy")(config);

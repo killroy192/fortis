@@ -1,5 +1,5 @@
 const hre = require("hardhat");
-const deploy = require("../bin/deploy");
+const deploy = require("../deploy");
 const config = require("./config");
 
 async function main() {
@@ -17,7 +17,7 @@ async function main() {
     await routerContract.upgradeTo(newImplementation);
     const linkToken = await hre.ethers.getContractAt(
       "IERC20",
-      "0xb1d4538b4571d411f07960ef2838ce337fe1e80e",
+      "0xd14838A68E8AFBAdE5efb411d5871ea0011AFd28",
     );
     console.log("done");
     // need to fund contract under router

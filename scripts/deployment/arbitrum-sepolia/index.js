@@ -1,5 +1,5 @@
 const hre = require("hardhat");
-const deploy = require("../bin/deploy");
+const deploy = require("../deploy");
 const config = require("./config");
 
 async function main() {

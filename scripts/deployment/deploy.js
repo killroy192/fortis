@@ -3,7 +3,7 @@ const {
   isLoggedNetwork,
   getDeploymentLockData,
   updateDeploymentLockData,
-} = require("../../common");
+} = require("../common");
 
 const getLibrariesDynamically = (deploymentLock, config = {}) =>
   Object.entries(config).reduce((acc, [libName, getter]) => {
