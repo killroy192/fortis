@@ -839,6 +839,11 @@ export const proxyConfig = {
           name: "feedId",
           type: "string",
         },
+        {
+          internalType: "uint256",
+          name: "nonce",
+          type: "uint256",
+        }
       ],
       name: "trade",
       outputs: [],
