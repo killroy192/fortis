@@ -33,7 +33,6 @@
     "postcss": "8.4.28",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-gtm-module": "^2.0.11",
     "react-hook-form": "^7.46.2",
     "swr": "^2.2.2",
     "tailwind-merge": "^1.14.0",
