@@ -1,6 +1,7 @@
 const hre = require("hardhat");
 
-async function postDeploy(lock, linkTokenAddr) {
+async function upgradeMockOracle(lock, linkTokenAddr) {
+  console.log('\nrun script for upgrade MockOracle\n');
   const routerContract = await hre.ethers.getContractAt(
     "MockOracleRouter",
     lock.MockOracleRouter.addr,
@@ -35,7 +36,11 @@ async function postDeploy(lock, linkTokenAddr) {
     );
   }
 
-  console.log("done");
+  console.log("\ndone\n");
 }
 
-module.exports = postDeploy;
+async function upgrades(lock, linkTokenAddr) {
+  await upgradeMockOracle(lock, linkTokenAddr);
+}
+
+module.exports = upgrades;

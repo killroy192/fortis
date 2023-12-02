@@ -40,8 +40,6 @@ const deployOnlyChanged =
       return arg;
     });
 
-    console.log(getDeploymentArgs);
-
     const deploymentArgs = await Promise.all(getDeploymentArgs);
 
     console.log("deployerOptions", deployerOptions);
