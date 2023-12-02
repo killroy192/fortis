@@ -11,7 +11,7 @@ abi/
 
 node_modules
 .yarn
-lib
+lib/forge-std
 
 .DS_Store
 src/.DS_Store
