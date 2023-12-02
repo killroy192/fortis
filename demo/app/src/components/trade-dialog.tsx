@@ -180,8 +180,10 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
       });
     }
 
+    const nonce = BigInt(new Date().getTime());
+
     const result = await trade({
-      args: [tokenA!, tokenB!, parseEther(`${fromAmount}`), feedId],
+      args: [tokenA!, tokenB!, parseEther(`${fromAmount}`), feedId, nonce],
     });
     toast({
       title: "Swap completed:",

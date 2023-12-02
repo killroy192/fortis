@@ -50,12 +50,13 @@ contract DataStreamsConsumer is IOracleConsumerContract {
         address tokenIn,
         address tokenOut,
         uint256 amount,
-        string memory feedId
+        string memory feedId,
+        uint256 memory nonce
     ) external {
         i_oracleEmitter.addRequest(
             address(this),
             abi.encode(msg.sender, tokenIn, tokenOut, amount, feedId),
-            randomUINT(),
+            nonce,
             msg.sender
         );
     }
