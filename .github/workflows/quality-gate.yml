@@ -28,5 +28,5 @@ jobs:
         run: make lint
       - name: Run unit tests
         run: make test
-      - name: Run deployment
-        run: make deploy
+      - name: Run example deployment
+        run: make deploy-example

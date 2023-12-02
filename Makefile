@@ -40,8 +40,8 @@ abi :; npx hardhat export-abi
 
 network?=hardhat
 
-deploy :; npx hardhat run --network $(network) scripts/deployment/$(network)
+deploy-example :; npx hardhat run --network $(network) scripts/deployment/example/$(network)
 
-run-e2e :; npx hardhat run --network $(network) scripts/e2e/trigger.js
+tes :; npx hardhat run --network $(network) scripts/e2e/example/trigger.js
 
 -include ${FCT_PLUGIN_PATH}/makefile-external

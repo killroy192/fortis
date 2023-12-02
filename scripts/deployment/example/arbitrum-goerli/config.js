@@ -3,8 +3,13 @@ module.exports = [
     contract: "RequestLib",
   },
   {
-    contract: "MockOracle",
+    contract: "AutomationEmitter",
+  },
+  {
+    contract: "FakedOracle",
     args: [
+      // emitter
+      (deploymentLock) => deploymentLock.AutomationEmitter.addr,
       // verifier
       "0xcB1241Fdf26501fA7A2d47d841dcF72C3CAa9dCe",
       // eth/usd data stream id
@@ -21,10 +26,10 @@ module.exports = [
     },
   },
   {
-    contract: "MockOracleRouter",
+    contract: "FakedOracleProxy",
   },
   {
-    contract: "MockConsumer",
-    args: [(deploymentLock) => deploymentLock.MockOracleRouter.addr],
+    contract: "SimpleConsumer",
+    args: [(deploymentLock) => deploymentLock.FakedOracleProxy.addr],
   },
 ];

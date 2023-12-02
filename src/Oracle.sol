@@ -10,6 +10,7 @@ import {IFeeManager} from "./interfaces/IFeeManager.sol";
 import {IOracle} from "./interfaces/IOracle.sol";
 import {IOracleConsumerContract, ForwardData, FeedType} from "./interfaces/IOracleCallBackContract.sol";
 import {IRequestsManager} from "./interfaces/IRequestsManager.sol";
+import {IAutomationEmitter} from "./interfaces/IAutomationEmitter.sol";
 
 import {RequestLib} from "./libs/RequestLib.sol";
 
@@ -22,13 +23,7 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
     error InvalidRequestsExecution(bytes32 id);
     error FailedRequestsConsumption(bytes32 id);
 
-    event AutomationTrigger(
-        address callBackContract,
-        bytes callBackArgs,
-        uint256 nonce,
-        address sender
-    );
-
+    IAutomationEmitter public immutable emitter;
     IVerifierProxy public immutable verifier;
     RequestsManager public immutable requestManager;
     // blocks from request initialization
@@ -36,22 +31,24 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
 
     // Find a complete list of IDs and verifiers at https://docs.chain.link/data-streams/stream-ids
     constructor(
+        address _emmiter,
         address _verifier,
         string memory _dataStreamfeedId,
         address _priceFeedId,
         uint256 _requestTimeout
     ) DataStreamConsumer(_dataStreamfeedId) PriceFeedConsumer(_priceFeedId) {
+        emitter = IAutomationEmitter(_emmiter);
         verifier = IVerifierProxy(_verifier);
         requestManager = new RequestsManager();
         requestTimeout = _requestTimeout;
     }
 
-    function addRequest(
+    function _addRequest(
         address callbackContract,
         bytes memory callbackArgs,
         uint256 nonce,
         address sender
-    ) external returns (bool) {
+    ) internal {
         (
             bytes32 id,
             IRequestsManager.RequestStats memory reqStats
@@ -61,8 +58,22 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
             revert DuplicatedRequestCreation(id);
         }
         requestManager.addRequest(id);
-        emit AutomationTrigger(callbackContract, callbackArgs, nonce, sender);
-        return true;
+    }
+
+    function addRequest(
+        address callbackContract,
+        bytes memory callbackArgs,
+        uint256 nonce,
+        address sender
+    ) external returns (bool) {
+        _addRequest(callbackContract, callbackArgs, nonce, sender);
+        return
+            emitter.emitAutomationEvent(
+                callbackContract,
+                callbackArgs,
+                nonce,
+                sender
+            );
     }
 
     function performUpkeep(bytes calldata performData) external override {
@@ -170,9 +181,7 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
             revert FailedRequestsConsumption(id);
         }
 
-        requestManager.fulfillRequest(id);
-
-        return true;
+        return requestManager.fulfillRequest(id);
     }
 
     // Utils

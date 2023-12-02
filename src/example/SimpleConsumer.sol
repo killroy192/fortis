@@ -2,16 +2,16 @@
 pragma solidity ^0.8.16;
 
 import {IOracle} from "src/interfaces/IOracle.sol";
-import {IFakeOracle} from "src/interfaces/IFakeOracle.sol";
+import {IFakedOracle} from "./fakers/IFakedOracle.sol";
 import {IOracleConsumerContract, FeedType, ForwardData} from "src/interfaces/IOracleCallBackContract.sol";
 
 /**
- * @title MockConsumer
+ * @title SimpleConsumer
  * @notice Use this contract implements IOracleConsumerContract
  * interface with simple data forwarding logic.
  * Can be used as an example or for e2e/demo.
  */
-contract MockConsumer is IOracleConsumerContract {
+contract SimpleConsumer is IOracleConsumerContract {
     struct CustomRequestParams {
         address tokenIn;
         address tokenOut;
@@ -56,7 +56,7 @@ contract MockConsumer is IOracleConsumerContract {
         CustomRequestParams memory params,
         uint256 nonce
     ) public returns (bool) {
-        bool success = IFakeOracle(oracle).addFakeRequest(
+        bool success = IFakedOracle(oracle).addFakeRequest(
             address(this),
             abi.encode(params),
             nonce,
