@@ -3,7 +3,7 @@ import { ethers, upgrades } from "hardhat";
 async function main() {
     const [signer] = await ethers.getSigners();
     const router = "0xab7664500b19a7a2362Ab26081e6DfB971B6F1B0";
-    const oracle = '0xab7664500b19a7a2362Ab26081e6DfB971B6F1B0'
+    const oracle = '0xA2cF42CbaAb23134424B513EdD209aF7653193a9'
 
     const Consumer = await ethers.getContractFactory("DataStreamsConsumer");
     const consumer = await upgrades.deployProxy(
