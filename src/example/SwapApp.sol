@@ -32,30 +32,24 @@ contract SwapApp is IOracleConsumerContract {
     }
 
     function trade(
-        address tokenIn,
-        address tokenOut,
-        uint256 amount,
-        string memory feedId,
+        TradeParamsStruct memory tradeParams,
         uint256 nonce
     ) external {
         IOracle(oracle).addRequest(
             address(this),
-            abi.encode(msg.sender, tokenIn, tokenOut, amount, feedId),
+            abi.encode(tradeParams),
             nonce,
             msg.sender
         );
     }
 
     function notAutomatedTrade(
-        address tokenIn,
-        address tokenOut,
-        uint256 amount,
-        string memory feedId,
+        TradeParamsStruct memory tradeParams,
         uint256 nonce
     ) external {
         IFakedOracle(oracle).addFakeRequest(
             address(this),
-            abi.encode(msg.sender, tokenIn, tokenOut, amount, feedId),
+            abi.encode(tradeParams),
             nonce,
             msg.sender
         );

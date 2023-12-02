@@ -25,10 +25,13 @@ async function main() {
 
   await weth.approve(await consumer.getAddress(), amountIn);
   await consumer.trade(
-    wethAddress,
-    usdc,
-    amountIn,
-    feedsId,
+    {
+      recipient: await signer.getAddress(),
+      tokenIn: wethAddress,
+      tokenOut: usdc,
+      amountIn: amountIn,
+      feedId: feedsId
+    },
     Math.ceil(Math.random() * 100),
   );
   console.log("Successfully traded WETH tokens for USDC");
