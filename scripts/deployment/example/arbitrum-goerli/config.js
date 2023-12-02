@@ -3,8 +3,13 @@ module.exports = [
     contract: "RequestLib",
   },
   {
-    contract: "MockOracle",
+    contract: "AutomationEmitter",
+  },
+  {
+    contract: "FakedOracle",
     args: [
+      // emitter
+      (deploymentLock) => deploymentLock.AutomationEmitter.addr,
       // verifier
       "0xcB1241Fdf26501fA7A2d47d841dcF72C3CAa9dCe",
       // eth/usd data stream id
@@ -20,4 +25,18 @@ module.exports = [
       },
     },
   },
-]
+  {
+    contract: "FakedOracleProxy",
+  },
+  {
+    contract: "SimpleConsumer",
+    args: [(deploymentLock) => deploymentLock.FakedOracleProxy.addr],
+  },
+  {
+    contract: "SwapApp",
+    args: [
+      "0xab7664500b19a7a2362Ab26081e6DfB971B6F1B0",
+      (deploymentLock) => deploymentLock.FakedOracleProxy.addr
+    ],
+  },
+];

@@ -2,13 +2,13 @@
 pragma solidity ^0.8.16;
 
 import {OracleRouter} from "src/OracleRouter.sol";
-import {IFakeOracle} from "src/interfaces/IFakeOracle.sol";
+import {IFakedOracle} from "./IFakedOracle.sol";
 
 /*
  * Contract for dev porposes
  * @note keeper fundint won't work when OracleRouter is used
  */
-contract MockOracleRouter is OracleRouter, IFakeOracle {
+contract FakedOracleProxy is OracleRouter, IFakedOracle {
     // solhint-disable-next-line no-empty-blocks
     constructor() OracleRouter() {}
 
@@ -19,7 +19,7 @@ contract MockOracleRouter is OracleRouter, IFakeOracle {
         address sender
     ) external returns (bool) {
         return
-            IFakeOracle(implementation()).addFakeRequest(
+            IFakedOracle(implementation()).addFakeRequest(
                 callbackContract,
                 callbackArgs,
                 nonce,

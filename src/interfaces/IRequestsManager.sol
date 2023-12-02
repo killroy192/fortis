@@ -14,9 +14,9 @@ interface IRequestsManager {
         uint256 blockNumber;
     }
 
-    function addRequest(bytes32 _id) external;
+    function addRequest(bytes32 _id) external returns (bool);
 
-    function fulfillRequest(bytes32 _id) external;
+    function fulfillRequest(bytes32 _id) external returns (bool);
 
     function getRequest(
         bytes32 _id

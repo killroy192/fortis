@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.16;
 
-interface IFakeOracle {
+interface IFakedOracle {
     function addFakeRequest(
         address callbackContract,
         bytes memory callbackArgs,

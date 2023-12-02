@@ -7,7 +7,8 @@ pragma solidity ^0.8.16;
 
 import "@std/Test.sol";
 
-import {Oracle} from "../Oracle.sol";
+import {Oracle} from "src/Oracle.sol";
+import {AutomationEmitter} from "src/AutomationEmitter.sol";
 
 contract OracleTest is Test {
     event AutomationTrigger(
@@ -17,7 +18,18 @@ contract OracleTest is Test {
         address sender
     );
 
-    Oracle private oracle = new Oracle(address(0), "test", address(0), 10);
+    Oracle private oracle;
+
+    function setUp() public {
+        AutomationEmitter emitter = new AutomationEmitter();
+        oracle = new Oracle(
+            address(emitter),
+            address(0),
+            "test",
+            address(0),
+            10
+        );
+    }
 
     function test_addRequest() public {
         vm.expectEmit();
