@@ -38,13 +38,26 @@ contract DataStreamsConsumer is IOracleConsumerContract {
         i_oracleEmitter = IOracle(oracleEmitter);
     }
 
+    function randomUINT() internal view returns (uint256) {
+        return uint256(keccak256(abi.encodePacked(
+            tx.origin,
+            blockhash(block.number - 1),
+            block.timestamp
+        )));
+    }
+
     function trade(
         address tokenIn,
         address tokenOut,
         uint256 amount,
         string memory feedId
     ) external {
-        i_oracleEmitter.addRequest(address(this), abi.encode(msg.sender, tokenIn, tokenOut, amount, feedId));
+        i_oracleEmitter.addRequest(
+            address(this),
+            abi.encode(msg.sender, tokenIn, tokenOut, amount, feedId),
+            randomUINT(),
+            msg.sender
+        );
     }
 
     function consume(ForwardData memory forwardData) external returns (bool) {
