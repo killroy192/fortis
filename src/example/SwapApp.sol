@@ -11,6 +11,10 @@ import {ISwapRouter} from "./ISwapRouter.sol";
  * @title SwapApp
  */
 contract SwapApp is IOracleConsumerContract {
+    error UnsuccesfullTradeInititation(
+        TradeParamsStruct tradeParams,
+        uint256 nonce
+    );
     uint24 public constant FEE = 3000;
 
     ISwapRouter public immutable i_router;
@@ -24,7 +28,7 @@ contract SwapApp is IOracleConsumerContract {
         string feedId;
     }
 
-    event TradeExecuted(uint256 tokensAmount);
+    event TradeExecuted(uint256 tokensAmount, int256 price);
 
     constructor(address _router, address _oracle) {
         i_router = ISwapRouter(_router);
@@ -34,25 +38,33 @@ contract SwapApp is IOracleConsumerContract {
     function trade(
         TradeParamsStruct memory tradeParams,
         uint256 nonce
-    ) external {
-        IOracle(oracle).addRequest(
+    ) external returns (bool) {
+        bool success = IOracle(oracle).addRequest(
             address(this),
             abi.encode(tradeParams),
             nonce,
             msg.sender
         );
+        if (!success) {
+            revert UnsuccesfullTradeInititation(tradeParams, nonce);
+        }
+        return success;
     }
 
     function notAutomatedTrade(
         TradeParamsStruct memory tradeParams,
         uint256 nonce
-    ) external {
-        IFakedOracle(oracle).addFakeRequest(
+    ) external returns (bool) {
+        bool success = IFakedOracle(oracle).addFakeRequest(
             address(this),
             abi.encode(tradeParams),
             nonce,
             msg.sender
         );
+        if (!success) {
+            revert UnsuccesfullTradeInititation(tradeParams, nonce);
+        }
+        return success;
     }
 
     function consume(ForwardData memory forwardData) external returns (bool) {
@@ -64,7 +76,7 @@ contract SwapApp is IOracleConsumerContract {
             forwardData.price,
             tradeParams
         );
-        emit TradeExecuted(successfullyTradedTokens);
+        emit TradeExecuted(successfullyTradedTokens, forwardData.price);
         return true;
     }
 
