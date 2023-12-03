@@ -136,7 +136,7 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
 
         bool success = IOracleConsumerContract(callbackContract).consume(
             ForwardData({
-                price: report.price,
+                price: int256(report.price),
                 feedType: FeedType.DataStream,
                 forwardArguments: callbackArgs
             })
@@ -155,15 +155,14 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
         uint256 nonce,
         address sender
     ) external returns (bool) {
-        (
-            bytes32 id,
-            IRequestsManager.RequestStats memory reqStats
-        ) = getRequestProps(callbackContract, callbackArgs, nonce, sender);
+        (bytes32 id, bool executable) = previewFallbackCall(
+            callbackContract,
+            callbackArgs,
+            nonce,
+            sender
+        );
 
-        if (
-            reqStats.status != IRequestsManager.RequestStatus.Pending ||
-            reqStats.blockNumber + requestTimeout < block.number
-        ) {
+        if (!executable) {
             revert InvalidRequestsExecution(id);
         }
 
@@ -182,6 +181,24 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
         }
 
         return requestManager.fulfillRequest(id);
+    }
+
+    function previewFallbackCall(
+        address callbackContract,
+        bytes memory callbackArgs,
+        uint256 nonce,
+        address sender
+    ) public view returns (bytes32, bool) {
+        (
+            bytes32 id,
+            IRequestsManager.RequestStats memory reqStats
+        ) = getRequestProps(callbackContract, callbackArgs, nonce, sender);
+
+        bool executable = reqStats.status ==
+            IRequestsManager.RequestStatus.Pending ||
+            reqStats.blockNumber + requestTimeout > block.number;
+
+        return (id, executable);
     }
 
     // Utils
