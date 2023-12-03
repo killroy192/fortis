@@ -162,7 +162,7 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
             sender
         );
 
-        if (executable) {
+        if (!executable) {
             revert InvalidRequestsExecution(id);
         }
 
@@ -194,9 +194,9 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
             IRequestsManager.RequestStats memory reqStats
         ) = getRequestProps(callbackContract, callbackArgs, nonce, sender);
 
-        bool executable = reqStats.status !=
+        bool executable = reqStats.status ==
             IRequestsManager.RequestStatus.Pending ||
-            reqStats.blockNumber + requestTimeout < block.number;
+            reqStats.blockNumber + requestTimeout > block.number;
 
         return (id, executable);
     }
