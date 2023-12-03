@@ -20,19 +20,18 @@ import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormLabel } from "@/components//ui/form";
 import { symbols } from "@/config/trade";
 import { useDatafeed } from "@/app/datafeed-provider";
-import { Pair, chainlinkPairToFeedId } from "@/_types";
+import { Pair } from "@/_types";
 import { useState } from "react";
 import {
   wethConfig,
   swapAppConfig,
-  usdcConfig,
-  avaxConfig, oracleConfig,
+  usdcConfig, oracleConfig,
 } from "@/config/contracts";
 import { Check } from "lucide-react";
 
 const formSchema = z.object({
   from: z.coerce.number().gt(0),
-  to: z.coerce.number().gt(0),
+  to: z.coerce.number(),
 });
 
 const TradeDialog = ({ pair }: { pair: Pair }) => {
@@ -40,18 +39,10 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
   const [txHash, setTxHash] = useState<Address | undefined>();
   const { address } = useAccount();
   const { prices } = useDatafeed();
-  const [tokenA, setTokenA] = useState<Address | undefined>(
-    pair === Pair.AVAX_USD ? avaxConfig.address : wethConfig.address,
-  );
-  const [tokenB, setTokenB] = useState<Address | undefined>(usdcConfig.address);
+  const [tokenA] = useState<Address | undefined>(wethConfig.address);
+  const [tokenB] = useState<Address | undefined>(usdcConfig.address);
   const { data: tokenABalance } = useBalance({ address, token: tokenA });
   const { data: tokenBBalance } = useBalance({ address, token: tokenB });
-
-  const [feedId, setFeedId] = useState(
-    pair === Pair.AVAX_USD
-      ? chainlinkPairToFeedId[Pair.AVAX_USD]
-      : chainlinkPairToFeedId[Pair.ETH_USD],
-  );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -72,23 +63,6 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
 
   const { writeAsync: approveWeth } = useContractWrite({
     ...wethConfig,
-    functionName: "approve",
-    onError(error) {
-      toast({
-        variant: "destructive",
-        title: error.name,
-        description: error.message,
-      });
-    },
-    onSuccess() {
-      toast({
-        title: "Approve transaction has been sent",
-      });
-    },
-  });
-
-  const { writeAsync: approveAvax } = useContractWrite({
-    ...avaxConfig,
     functionName: "approve",
     onError(error) {
       toast({
@@ -139,14 +113,9 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log('submitting');
     setIsLoading(true);
-    setFeedId(
-      tokenA === wethConfig.address
-        ? chainlinkPairToFeedId[Pair.ETH_USD]
-        : chainlinkPairToFeedId[Pair.AVAX_USD],
-    );
     const amountA = parseUnits(`${values.from}`, tokenABalance?.decimals ?? 0);
-    const amountB = parseUnits(`${values.to}`, tokenBBalance?.decimals ?? 0);
 
     if (amountA > (tokenABalance?.value ?? BigInt(0))) {
       toast({
@@ -168,12 +137,6 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
       });
     }
 
-    if (tokenA == avaxConfig.address) {
-      await approveAvax({
-        args: [swapAppConfig.address, parseEther(`${fromAmount}`)],
-      });
-    }
-
     if (tokenA == usdcConfig.address) {
       await approveUsdc({
         args: [swapAppConfig.address, parseEther(`${fromAmount}`)],
@@ -181,20 +144,20 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
     }
 
     const nonce = BigInt(new Date().getTime());
-    const tradeArgs = [tokenA!, tokenB!, amountA, feedId] as const;
+    const tradeArgs = {recipient: address!,tokenIn: tokenA!,tokenOut: tokenB!,amountIn: amountA} as const;
 
     const result = await trade({
-      args: [...tradeArgs, nonce],
+      args: [tradeArgs, nonce],
     });
-    const { refetch} = useContractRead({
-      ...oracleConfig,
-      functionName: "previewFallbackCall",
-      args: [swapAppConfig.address, tradeArgs, nonce, address],
-    });
-    setInterval(async() => {
-      const result = await refetch();
-      console.log(result);
-    }, 1000);
+    // const { refetch} = useContractRead({
+    //   ...oracleConfig,
+    //   functionName: "previewFallbackCall",
+    //   args: [swapAppConfig.address, tradeArgs, nonce, address] as unknown,
+    // });
+    // setInterval(async() => {
+    //   const result = await refetch();
+    //   console.log(result);
+    // }, 1000);
     toast({
       title: "Swap completed:",
       description: `${values.from} ${tokenABalance?.symbol} for ${values.to} ${tokenBBalance?.symbol}`,
