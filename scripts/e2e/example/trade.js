@@ -49,7 +49,7 @@ async function main() {
   );
   console.log("done\n");
   console.log("execute trade");
-  // await consumer.trade(tradeArgs, nonce);
+  await consumer.trade(tradeArgs, nonce);
   console.log("Successfully traded fWETH tokens for fUSDC");
 
   console.log("run fallback check logic..");
