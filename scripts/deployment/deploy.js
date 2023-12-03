@@ -1,6 +1,6 @@
 const hre = require("hardhat");
 const {
-  isLoggedNetwork,
+  isVerifyNetwork,
   getDeploymentLockData,
   updateDeploymentLockData,
 } = require("../common");
@@ -69,7 +69,7 @@ const deployOnlyChanged =
 
     console.log("Contract deployed, address:", contractAddress);
 
-    if (isLoggedNetwork()) {
+    if (isVerifyNetwork()) {
       console.log("verify newly deployed contract...");
 
       await hre.run("verify:verify", {

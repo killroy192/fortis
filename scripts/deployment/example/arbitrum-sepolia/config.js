@@ -1,3 +1,5 @@
+const externals = require("../../../config.externals")["arbitrum-sepolia"];
+
 module.exports = [
   {
     contract: "RequestLib",
@@ -11,13 +13,13 @@ module.exports = [
       // emitter
       (deploymentLock) => deploymentLock.AutomationEmitter.addr,
       // verifier
-      "0x2ff010DEbC1297f19579B4246cad07bd24F2488A",
+      externals.verifier,
       // eth/usd data stream id
-      "0x00027bbaff688c906a3e20a34fe951715d1018d262a5b66e38eda027a674cd1b",
+      externals.streamId,
       // eth/usd data feed
-      "0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165",
+      externals.datafeed,
       // timeout
-      5,
+      60,
     ],
     deployerOptions: {
       libs: {
@@ -34,9 +36,12 @@ module.exports = [
   },
   {
     contract: "SwapApp",
-    args: [
-      "0xab7664500b19a7a2362Ab26081e6DfB971B6F1B0",
-      (deploymentLock) => deploymentLock.FakedOracleProxy.addr
-    ],
+    args: [(deploymentLock) => deploymentLock.FakedOracleProxy.addr],
+  },
+  {
+    contract: "FWETH",
+  },
+  {
+    contract: "FUSDC",
   },
 ];
