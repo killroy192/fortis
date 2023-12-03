@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Address, parseEther, parseUnits } from "viem";
 import {
   useAccount,
-  useBalance,
+  useBalance, useContractRead,
   useContractWrite,
   useSendTransaction,
 } from "wagmi";
@@ -24,9 +24,9 @@ import { Pair, chainlinkPairToFeedId } from "@/_types";
 import { useState } from "react";
 import {
   wethConfig,
-  proxyConfig,
+  swapAppConfig,
   usdcConfig,
-  avaxConfig,
+  avaxConfig, oracleConfig,
 } from "@/config/contracts";
 import { Check } from "lucide-react";
 
@@ -122,7 +122,7 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
   });
 
   const { writeAsync: trade } = useContractWrite({
-    ...proxyConfig,
+    ...swapAppConfig,
     functionName: "trade",
     onError(error) {
       toast({
@@ -164,27 +164,37 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
         value: fromAmount ? parseEther(`${fromAmount}`) : undefined,
       });
       await approveWeth({
-        args: [proxyConfig.address, parseEther(`${fromAmount}`)],
+        args: [swapAppConfig.address, parseEther(`${fromAmount}`)],
       });
     }
 
     if (tokenA == avaxConfig.address) {
       await approveAvax({
-        args: [proxyConfig.address, parseEther(`${fromAmount}`)],
+        args: [swapAppConfig.address, parseEther(`${fromAmount}`)],
       });
     }
 
     if (tokenA == usdcConfig.address) {
       await approveUsdc({
-        args: [proxyConfig.address, parseEther(`${fromAmount}`)],
+        args: [swapAppConfig.address, parseEther(`${fromAmount}`)],
       });
     }
 
     const nonce = BigInt(new Date().getTime());
+    const tradeArgs = [tokenA!, tokenB!, amountA, feedId] as const;
 
     const result = await trade({
-      args: [tokenA!, tokenB!, parseEther(`${fromAmount}`), feedId, nonce],
+      args: [...tradeArgs, nonce],
     });
+    const { refetch} = useContractRead({
+      ...oracleConfig,
+      functionName: "previewFallbackCall",
+      args: [swapAppConfig.address, tradeArgs, nonce, address],
+    });
+    setInterval(async() => {
+      const result = await refetch();
+      console.log(result);
+    }, 1000);
     toast({
       title: "Swap completed:",
       description: `${values.from} ${tokenABalance?.symbol} for ${values.to} ${tokenBBalance?.symbol}`,
