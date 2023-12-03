@@ -5,7 +5,6 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {IOracle} from "src/interfaces/IOracle.sol";
 import {IOracleConsumerContract, ForwardData} from "src/interfaces/IOracleCallBackContract.sol";
 import {IFakedOracle} from "./fakers/IFakedOracle.sol";
-import {ISwapRouter} from "./ISwapRouter.sol";
 
 /**
  * @title SwapApp
@@ -15,9 +14,9 @@ contract SwapApp is IOracleConsumerContract {
         TradeParamsStruct tradeParams,
         uint256 nonce
     );
-    uint24 public constant FEE = 3000;
 
-    ISwapRouter public immutable i_router;
+    event Price(uint256 price);
+
     address public immutable oracle;
 
     struct TradeParamsStruct {
@@ -25,13 +24,11 @@ contract SwapApp is IOracleConsumerContract {
         address tokenIn;
         address tokenOut;
         uint256 amountIn;
-        string feedId;
     }
 
     event TradeExecuted(uint256 tokensAmount, int256 price);
 
-    constructor(address _router, address _oracle) {
-        i_router = ISwapRouter(_router);
+    constructor(address _oracle) {
         oracle = _oracle;
     }
 
@@ -83,18 +80,22 @@ contract SwapApp is IOracleConsumerContract {
     //swap logic
 
     function _scalePriceToTokenDecimals(
-        IERC20Metadata tokenOut,
+        address tokenOut,
         int256 priceFromReport
     ) private view returns (uint256) {
-        uint256 pricefeedDecimals = 18;
-        uint8 tokenOutDecimals = tokenOut.decimals();
+        uint8 pricefeedDecimals = 18;
+        uint8 tokenOutDecimals = IERC20Metadata(tokenOut).decimals();
         if (tokenOutDecimals < pricefeedDecimals) {
-            uint256 difference = pricefeedDecimals - tokenOutDecimals;
+            uint8 difference = pricefeedDecimals - tokenOutDecimals;
             return uint256(priceFromReport) / 10 ** difference;
-        } else {
+        }
+
+        if (tokenOutDecimals > pricefeedDecimals) {
             uint256 difference = tokenOutDecimals - pricefeedDecimals;
             return uint256(priceFromReport) * 10 ** difference;
         }
+
+        return uint256(priceFromReport);
     }
 
     function _swapTokens(
@@ -104,9 +105,11 @@ contract SwapApp is IOracleConsumerContract {
         uint8 inputTokenDecimals = IERC20Metadata(tradeParams.tokenIn)
             .decimals();
         uint256 priceForOneToken = _scalePriceToTokenDecimals(
-            IERC20Metadata(tradeParams.tokenOut),
+            tradeParams.tokenOut,
             price
         );
+
+        emit Price(priceForOneToken);
 
         uint256 outputAmount = (priceForOneToken * tradeParams.amountIn) /
             10 ** inputTokenDecimals;
@@ -116,23 +119,13 @@ contract SwapApp is IOracleConsumerContract {
             address(this),
             tradeParams.amountIn
         );
-        IERC20Metadata(tradeParams.tokenIn).approve(
-            address(i_router),
-            tradeParams.amountIn
+
+        IERC20Metadata(tradeParams.tokenOut).transfer(
+            tradeParams.recipient,
+            outputAmount
         );
 
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
-            .ExactInputSingleParams(
-                tradeParams.tokenIn,
-                tradeParams.tokenOut,
-                FEE,
-                tradeParams.recipient,
-                tradeParams.amountIn,
-                outputAmount,
-                0
-            );
-
-        return i_router.exactInputSingle(params);
+        return outputAmount;
     }
 
     // solhint-disable-next-line no-empty-blocks

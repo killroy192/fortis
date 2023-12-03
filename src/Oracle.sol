@@ -195,7 +195,7 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
         ) = getRequestProps(callbackContract, callbackArgs, nonce, sender);
 
         bool executable = reqStats.status ==
-            IRequestsManager.RequestStatus.Pending ||
+            IRequestsManager.RequestStatus.Pending &&
             reqStats.blockNumber + requestTimeout > block.number;
 
         return (id, executable);
