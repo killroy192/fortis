@@ -1,5 +1,6 @@
 const { ethers } = require("hardhat");
 const { getDeploymentLockData } = require("../../common");
+const hre = require("hardhat");
 
 const coder = new ethers.AbiCoder();
 

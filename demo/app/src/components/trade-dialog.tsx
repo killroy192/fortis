@@ -39,10 +39,10 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
   const [txHash, setTxHash] = useState<Address | undefined>();
   const { address } = useAccount();
   const { prices } = useDatafeed();
-  const [tokenA] = useState<Address | undefined>(wethConfig.address);
-  const [tokenB] = useState<Address | undefined>(usdcConfig.address);
-  const { data: tokenABalance } = useBalance({ address, token: tokenA });
-  const { data: tokenBBalance } = useBalance({ address, token: tokenB });
+  const [fWETH] = useState<Address | undefined>(wethConfig.address);
+  const [fUSDC] = useState<Address | undefined>(usdcConfig.address);
+  const { data: wethBalance } = useBalance({ address, token: fWETH });
+  const { data: usdcBalance } = useBalance({ address, token: fUSDC });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -113,38 +113,24 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log('submitting');
     setIsLoading(true);
-    const amountA = parseUnits(`${values.from}`, tokenABalance?.decimals ?? 0);
+    const amountIn = parseUnits(`${values.from}`, 18);
+    console.log('submitting', amountIn);
 
-    if (amountA > (tokenABalance?.value ?? BigInt(0))) {
-      toast({
-        title: "Error:",
-        description: "Insufficient Balance",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-      return;
-    }
-
-    if (tokenA == wethConfig.address) {
-      await wrapEth({
-        to: wethConfig.address,
-        value: fromAmount ? parseEther(`${fromAmount}`) : undefined,
-      });
+    if (fWETH == wethConfig.address) {
       await approveWeth({
         args: [swapAppConfig.address, parseEther(`${fromAmount}`)],
       });
     }
 
-    if (tokenA == usdcConfig.address) {
-      await approveUsdc({
-        args: [swapAppConfig.address, parseEther(`${fromAmount}`)],
-      });
-    }
+    // if (fWETH == usdcConfig.address) {
+    //   await approveUsdc({
+    //     args: [swapAppConfig.address, parseEther(`${fromAmount}`)],
+    //   });
+    // }
 
     const nonce = BigInt(new Date().getTime());
-    const tradeArgs = {recipient: address!,tokenIn: tokenA!,tokenOut: tokenB!,amountIn: amountA} as const;
+    const tradeArgs = {recipient: address!,tokenIn: fWETH!,tokenOut: fUSDC!,amountIn} as const;
 
     const result = await trade({
       args: [tradeArgs, nonce],
@@ -158,11 +144,11 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
     //   const result = await refetch();
     //   console.log(result);
     // }, 1000);
-    toast({
-      title: "Swap completed:",
-      description: `${values.from} ${tokenABalance?.symbol} for ${values.to} ${tokenBBalance?.symbol}`,
-      variant: "success",
-    });
+    // toast({
+    //   title: "Swap completed:",
+    //   description: `${values.from} ${wethBalance?.symbol} for ${values.to} ${usdcBalance?.symbol}`,
+    //   variant: "success",
+    // });
     setIsLoading(false);
     setTxHash(result.hash);
   }
@@ -211,7 +197,7 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
                       }
                       form.setValue(
                         "to",
-                        tokenA === usdcConfig.address
+                        fWETH === usdcConfig.address
                           ? Math.round(
                               (Number(e.target.value) + Number.EPSILON) * 100,
                             ) /
@@ -229,20 +215,12 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
               <Label className="text-base font-[450] leading-4 text-muted-foreground">
                 Balance:&nbsp;
                 <span className="text-foreground">
-                  {tokenABalance?.formatted}
+                  {wethBalance?.formatted}
                 </span>
               </Label>
               <div className="flex items-center space-x-2 rounded-md bg-muted px-4 py-2">
-                {tokenABalance?.symbol && (
-                  <Image
-                    src={symbols[tokenABalance?.symbol]}
-                    height={24}
-                    width={24}
-                    alt={tokenABalance.symbol}
-                  />
-                )}
                 <span className="text-base font-[450] leading-4">
-                  {tokenABalance?.symbol}
+                  {wethBalance?.symbol}
                 </span>
               </div>
             </div>
@@ -269,7 +247,7 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
                       }
                       form.setValue(
                         "from",
-                        tokenA === usdcConfig.address
+                        fWETH === usdcConfig.address
                           ? Number(e.target.value) * Number(prices[pair])
                           : Math.round(
                               (Number(e.target.value) + Number.EPSILON) * 100,
@@ -287,20 +265,12 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
               <Label className="text-base font-[450] leading-4 text-muted-foreground">
                 Balance:&nbsp;
                 <span className="text-foreground">
-                  {tokenBBalance?.formatted}
+                  {usdcBalance?.formatted}
                 </span>
               </Label>
               <div className="flex items-center space-x-2 rounded-md bg-muted px-4 py-2">
-                {tokenBBalance?.symbol && (
-                  <Image
-                    src={symbols[tokenBBalance?.symbol]}
-                    height={24}
-                    width={24}
-                    alt={tokenBBalance.symbol}
-                  />
-                )}
                 <span className="text-base font-[450] leading-4">
-                  {tokenBBalance?.symbol}
+                  {usdcBalance?.symbol}
                 </span>
               </div>
             </div>
