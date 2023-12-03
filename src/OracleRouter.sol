@@ -67,6 +67,21 @@ contract OracleRouter is
             );
     }
 
+    function previewFallbackCall(
+        address callbackContract,
+        bytes memory callbackArgs,
+        uint256 nonce,
+        address sender
+    ) public view returns (bytes32, bool) {
+        return
+            IOracle(_implementation).previewFallbackCall(
+                callbackContract,
+                callbackArgs,
+                nonce,
+                sender
+            );
+    }
+
     function addRequest(
         address callbackContract,
         bytes memory callbackArgs,
