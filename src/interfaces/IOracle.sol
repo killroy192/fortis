@@ -16,4 +16,11 @@ interface IOracle {
         uint256 nonce,
         address sender
     ) external returns (bool);
+
+    function previewFallbackCall(
+        address callbackContract,
+        bytes memory callbackArgs,
+        uint256 nonce,
+        address sender
+    ) external view returns (bytes32, bool);
 }
