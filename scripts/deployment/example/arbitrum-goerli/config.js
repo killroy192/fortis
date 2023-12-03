@@ -1,3 +1,5 @@
+const externals = require("../../../config.externals")["arbitrum-goerli"];
+
 module.exports = [
   {
     contract: "RequestLib",
@@ -11,11 +13,11 @@ module.exports = [
       // emitter
       (deploymentLock) => deploymentLock.AutomationEmitter.addr,
       // verifier
-      "0xcB1241Fdf26501fA7A2d47d841dcF72C3CAa9dCe",
+      externals.verifier,
       // eth/usd data stream id
-      "0x00029584363bcf642315133c335b3646513c20f049602fc7d933be0d3f6360d3",
+      externals.streamId,
       // eth/usd data feed
-      "0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165",
+      externals.datafeed,
       // timeout
       5,
     ],
@@ -34,9 +36,12 @@ module.exports = [
   },
   {
     contract: "SwapApp",
-    args: [
-      "0xab7664500b19a7a2362Ab26081e6DfB971B6F1B0",
-      (deploymentLock) => deploymentLock.FakedOracleProxy.addr
-    ],
+    args: [(deploymentLock) => deploymentLock.FakedOracleProxy.addr],
+  },
+  {
+    contract: "FWETH",
+  },
+  {
+    contract: "FUSDC",
   },
 ];

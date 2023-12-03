@@ -40,10 +40,10 @@ abi :; npx hardhat export-abi
 
 network?=hardhat
 
-deploy-example :; npx hardhat run --network $(network) scripts/deployment/example/$(network)
+deploy-demo :; npx hardhat run --network $(network) scripts/deployment/example/$(network)
 
-tes :; npx hardhat run --network $(network) scripts/e2e/example/trigger.js
+auto-demo :; npx hardhat run --network $(network) scripts/e2e/example/$(script)
 
-trade :; npx hardhat run --network arbitrum-goerli scripts/e2e/example/trade.js
+trade-demo :; npx hardhat run --network $(network) scripts/e2e/example/trade.js
 
 -include ${FCT_PLUGIN_PATH}/makefile-external

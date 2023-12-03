@@ -18,6 +18,8 @@ contract SimpleConsumer is IOracleConsumerContract {
         uint256 amountIn;
     }
 
+    event Price(int256 price);
+
     error UnsuccesfullTrigger();
 
     int256 public lastConsumedPrice;
@@ -68,6 +70,7 @@ contract SimpleConsumer is IOracleConsumerContract {
             forwardData.forwardArguments,
             (CustomRequestParams)
         );
+        emit Price(forwardData.price);
         return true;
     }
 }

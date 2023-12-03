@@ -1,40 +1,80 @@
 const { ethers } = require("hardhat");
 const { getDeploymentLockData } = require("../../common");
 
-// arbitrum-goerli only
+const coder = new ethers.AbiCoder();
 
+/**
+ * Script to run simple trade on swap app via automation (data streams)
+ * also log states about execution from oracle side, aka is it possible to execute fallback
+ */
 async function main() {
+  console.log("prepare..");
   const [signer] = await ethers.getSigners();
-  const lock = await getDeploymentLockData();
+  const signerAddr = await signer.getAddress();
+  const lock = (await getDeploymentLockData())[hre.network.name];
 
-  const consumer = await hre.ethers.getContractAt(
-    "SwapApp",
-    lock[hre.network.name].SwapApp.addr,
-  );
+  const consumer = await hre.ethers.getContractAt("SwapApp", lock.SwapApp.addr);
 
-  const wethAddress = "0xe39ab88f8a4777030a534146a9ca3b52bd5d43a3";
-  const usdc = "0x8fb1e3fc51f3b789ded7557e680551d93ea9d892";
+  const wethAddress = lock.FWETH.addr;
+  const usdcAddress = lock.FUSDC.addr;
 
-  const feedsId =
-    "0x00029584363bcf642315133c335b3646513c20f049602fc7d933be0d3f6360d3";
-
-  const amountIn = ethers.parseEther("0.001");
+  const weth = await ethers.getContractAt("FWETH", wethAddress);
+  console.log("done\n");
 
   // Trade WETH <> USDC
-  const weth = await ethers.getContractAt("IERC20", wethAddress);
-
-  await weth.approve(await consumer.getAddress(), amountIn);
-  await consumer.trade(
-    {
-      recipient: await signer.getAddress(),
+  const amountIn = ethers.parseEther("0.001");
+  console.log("get 0.001 weth for trading");
+  await weth.deposit({ value: amountIn });
+  console.log("done\n");
+  console.log("approve 0.001 weth for trade");
+  await weth.approve(lock.SwapApp.addr, amountIn);
+  console.log("done\n");
+  console.log("generate trade input");
+  const nonce = Math.ceil(Math.random() * 100);
+  const tradeArgs = {
+    recipient: signerAddr,
+    tokenIn: wethAddress,
+    tokenOut: usdcAddress,
+    amountIn: amountIn,
+  };
+  console.log("trade nonce", nonce);
+  console.log(
+    "tradeArgs",
+    JSON.stringify({
+      recipient: signerAddr,
       tokenIn: wethAddress,
-      tokenOut: usdc,
-      amountIn: amountIn,
-      feedId: feedsId
-    },
-    Math.ceil(Math.random() * 100),
+      tokenOut: usdcAddress,
+      amountIn: "BigInt 0.001",
+    }),
   );
-  console.log("Successfully traded WETH tokens for USDC");
+  console.log("done\n");
+  console.log("execute trade");
+  await consumer.trade(tradeArgs, nonce);
+  console.log("Successfully traded fWETH tokens for fUSDC");
+
+  console.log("run fallback check logic..");
+  const oracle = await hre.ethers.getContractAt(
+    "FakedOracleProxy",
+    lock.FakedOracleProxy.addr,
+  );
+
+  const bytesCallbackArgs = coder.encode(
+    [
+      "tuple(address recipient, address tokenIn, address tokenOut, uint256 amountIn)",
+    ],
+    [tradeArgs],
+  );
+
+  const result = await oracle.previewFallbackCall(
+    consumer,
+    bytesCallbackArgs,
+    nonce,
+    tradeArgs.recipient,
+  );
+
+  console.log("previewFallbackCall call result", result);
+
+  console.log("done\n");
 }
 
 // We recommend this pattern to be able to use async/await everywhere

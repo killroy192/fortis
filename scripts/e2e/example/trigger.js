@@ -1,6 +1,9 @@
 const hre = require("hardhat");
 const { getDeploymentLockData } = require("../../common");
 
+/**
+ * Simple scrip to trigger SimpleConsumer and verify that it works
+ */
 async function main() {
   const lock = await getDeploymentLockData();
 

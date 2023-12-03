@@ -3,10 +3,12 @@ const fs = require("node:fs");
 const path = require("node:path");
 const hre = require("hardhat");
 
-const loggedNetworks = ["arbitrum-sepolia", "arbitrum-goerli"];
+const loggedNetworks = ["arbitrum-sepolia", "arbitrum-goerli", "localhost"];
+const verifyNetwork = ["arbitrum-sepolia", "arbitrum-goerli"];
 const filePath = path.resolve("deployment-lock.json");
 
 const isLoggedNetwork = () => loggedNetworks.includes(hre.network.name);
+const isVerifyNetwork = () => verifyNetwork.includes(hre.network.name);
 
 const getDeploymentLockData = async () => {
   const isExist = fs.existsSync(filePath);
@@ -25,6 +27,7 @@ const updateDeploymentLockData = (result) => {
 
 module.exports = {
   isLoggedNetwork,
+  isVerifyNetwork,
   getDeploymentLockData,
   updateDeploymentLockData,
 }
