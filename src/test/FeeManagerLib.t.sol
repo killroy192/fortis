@@ -13,6 +13,11 @@ contract RequestsLibTest is Test {
     event RequestAdded(address indexed emitter, uint256 blockNumber);
     event RequestFulfilled(address indexed emitter, uint256 blockNumber);
 
+    address private callbackContract = address(1);
+    bytes private callbackArgs = "";
+    uint256 private nonce = 0;
+    address private sender;
+    RequestLib.Requests private requests;
     bytes32 private id;
 
     function aseertEqRequests(
@@ -23,61 +28,97 @@ contract RequestsLibTest is Test {
     }
 
     function setUp() public {
-        id = keccak256(abi.encodePacked(this));
+        id = RequestLib.generateId(
+            callbackContract,
+            callbackArgs,
+            nonce,
+            msg.sender
+        );
+        requests.requests[id] = RequestLib.RequestStats({
+            status: RequestLib.RequestStatus.Init,
+            blockNumber: 0
+        });
     }
 
-    // function test_getRequestDefault() public {
-    //     aseertEqRequests(
-    //         manager.getRequest(id),
-    //         RequestLib.RequestStats({
-    //             status: RequestLib.RequestStatus.Init,
-    //             blockNumber: 0
-    //         })
-    //     );
-    // }
+    function test_generateId() public {
+        assertEq(
+            abi.encode(id),
+            abi.encode(
+                keccak256(
+                    abi.encode(
+                        callbackContract,
+                        callbackArgs,
+                        nonce,
+                        msg.sender
+                    )
+                )
+            )
+        );
+    }
 
-    // function test_addRequest() public {
-    //     // fake block.number
-    //     vm.roll(50);
+    function test_getRequestDefault() public {
+        aseertEqRequests(
+            RequestLib.getRequest(requests, id),
+            RequestLib.RequestStats({
+                status: RequestLib.RequestStatus.Init,
+                blockNumber: 0
+            })
+        );
+    }
 
-    //     // config to expect emit proper event
-    //     vm.expectEmit(true, true, false, false);
-    //     emit RequestAdded(address(this), 50);
+    function test_addRequest() public {
+        // fake block.number
+        vm.roll(50);
 
-    //     // execution
-    //     manager.addRequest(id);
+        // config to expect emit proper event
+        vm.expectEmit(true, true, false, false);
+        emit RequestAdded(msg.sender, 50);
 
-    //     // console.log("request creation block number %s", manager.getRequest(id).blockNumber);
-    //     // check result
-    //     aseertEqRequests(
-    //         manager.getRequest(id),
-    //         IRequestsManager.RequestStats({
-    //             status: IRequestsManager.RequestStatus.Pending,
-    //             blockNumber: 50
-    //         })
-    //     );
-    // }
+        // execution
+        RequestLib.addRequest(
+            requests,
+            callbackContract,
+            callbackArgs,
+            nonce,
+            msg.sender
+        );
 
-    // function test_fulfillRequest() public {
-    //     // fake block.number
-    //     vm.roll(39);
-    //     // add request
-    //     manager.addRequest(id);
+        // check result
+        aseertEqRequests(
+            RequestLib.getRequest(requests, id),
+            RequestLib.RequestStats({
+                status: RequestLib.RequestStatus.Pending,
+                blockNumber: 50
+            })
+        );
+    }
 
-    //     // config to expect emit proper event
-    //     vm.expectEmit(true, true, false, false);
-    //     emit RequestFulfilled(address(this), 39);
+    function test_fulfillRequest() public {
+        // fake block.number
+        vm.roll(39);
+        // add request
+        RequestLib.addRequest(
+            requests,
+            callbackContract,
+            callbackArgs,
+            nonce,
+            msg.sender
+        );
 
-    //     // execution
-    //     manager.fulfillRequest(id);
+        // config to expect emit proper event
+        vm.expectEmit(true, true, false, false);
+        emit RequestFulfilled(msg.sender, 39);
 
-    //     // check result
-    //     aseertEqRequests(
-    //         manager.getRequest(id),
-    //         IRequestsManager.RequestStats({
-    //             status: IRequestsManager.RequestStatus.Fulfilled,
-    //             blockNumber: 39
-    //         })
-    //     );
-    // }
+        // execution
+        RequestLib.fulfillRequest(requests, id);
+
+        // check result
+        aseertEqRequests(
+            RequestLib.getRequest(requests, id),
+            RequestLib.RequestStats({
+                status: RequestLib.RequestStatus.Fulfilled,
+                blockNumber: 39
+            })
+        );
+    }
 }
