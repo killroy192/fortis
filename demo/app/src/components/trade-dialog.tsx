@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormLabel } from "@/components//ui/form";
 import { useDatafeed } from "@/app/datafeed-provider";
-import { Pair } from "@/_types";
+import {ExchangePlatform, Pair} from "@/_types";
 import { useState } from "react";
 import {
   wethConfig,
@@ -28,6 +28,7 @@ import {
 import { Check } from "lucide-react";
 import {arbitrumSepolia} from 'viem/chains';
 import {ethers} from "ethers";
+import {useSocket} from "@/app/socket-provider";
 
 const formSchema = z.object({
   from: z.coerce.number().gt(0),
@@ -44,11 +45,13 @@ const TradeDialog = ({ pair, isFallbacked = false }: { pair: Pair, isFallbacked:
   const [isLoading, setIsLoading] = useState(false);
   const [txHash, setTxHash] = useState<Address | undefined>();
   const { address } = useAccount();
-  const { prices } = useDatafeed();
+  const { prices: exchangePrices } = useSocket();
   const [fWETH] = useState<Address | undefined>(wethConfig.address);
   const [fUSDC] = useState<Address | undefined>(usdcConfig.address);
   const { data: wethBalance } = useBalance({ address, token: fWETH });
   const { data: usdcBalance } = useBalance({ address, token: fUSDC });
+
+  const prices = exchangePrices[ExchangePlatform.COINBASE];
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -159,7 +162,7 @@ const TradeDialog = ({ pair, isFallbacked = false }: { pair: Pair, isFallbacked:
       <Check className="rounded-full bg-[#2FB96C] p-2" width={60} height={60} />
       <h3 className="my-3 text-xl font-medium">Swap completed!</h3>
       <a
-        href={`https://goerli.arbiscan.io/tx/${txHash}`}
+        href={`https://sepolia.arbiscan.io/tx/${txHash}`}
         target="_blank"
         rel="noreferrer"
         className="mt-4 flex items-center space-x-[8px] text-base font-bold leading-4 underline hover:brightness-125"
