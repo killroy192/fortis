@@ -24,7 +24,7 @@ export const TradeButton = ({ pair }: { pair: Pair }) => {
       {isConnected ? (
         <DialogTrigger asChild>
           <Button
-            disabled={!prices[pair]}
+            // disabled={!prices[pair]}
             className="w-[156px] bg-[#375BD2] py-3 text-base font-black leading-4 hover:bg-[#375BD2]/90"
           >
             Trade
