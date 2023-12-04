@@ -1,6 +1,7 @@
-const { ethers } = require("hardhat");
+const hre = require("hardhat");
 const { getDeploymentLockData } = require("../../common");
 
+const { ethers, network } = hre;
 const coder = new ethers.AbiCoder();
 
 /**
@@ -11,9 +12,9 @@ async function main() {
   console.log("prepare..");
   const [signer] = await ethers.getSigners();
   const signerAddr = await signer.getAddress();
-  const lock = (await getDeploymentLockData())[hre.network.name];
+  const lock = (await getDeploymentLockData())[network.name];
 
-  const consumer = await hre.ethers.getContractAt("SwapApp", lock.SwapApp.addr);
+  const consumer = await ethers.getContractAt("SwapApp", lock.SwapApp.addr);
 
   const wethAddress = lock.FWETH.addr;
   const usdcAddress = lock.FUSDC.addr;
@@ -49,19 +50,21 @@ async function main() {
   );
   console.log("done\n");
   console.log("execute trade");
-  await consumer.trade(tradeArgs, nonce);
+  const oracle = await ethers.getContractAt(
+    "FakedOracleProxy",
+    lock.FakedOracleProxy.addr,
+  );
 
-  const usdc = await hre.ethers.getContractAt("FUSDC", lock.FUSDC.addr);
+  const fee = await oracle.processingFee();
+  await consumer.trade(tradeArgs, nonce, { value: fee });
+
+  const usdc = await ethers.getContractAt("FUSDC", lock.FUSDC.addr);
 
   const balance = await usdc.balanceOf(signerAddr);
 
   console.log("Successfully traded fWETH tokens for fUSDC", balance);
 
   console.log("run fallback check logic..");
-  const oracle = await hre.ethers.getContractAt(
-    "FakedOracleProxy",
-    lock.FakedOracleProxy.addr,
-  );
 
   const bytesCallbackArgs = coder.encode(
     [

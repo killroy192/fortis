@@ -31,24 +31,24 @@ library FeeManagerLib {
     }
 
     function updateFee(
-        FeeState memory feeState,
+        FeeState storage feeState,
         uint256 lastReportFee
-    ) external pure {
+    ) external {
         uint256 currentFee = calcCurrentFee(lastReportFee);
         feeState.processingFee =
             ((feeState.processingFee * 35) / 100 + (currentFee * 65) / 100) /
             2;
     }
 
-    function spend(FeeState memory feeState, uint256 value) external pure {
+    function spend(FeeState storage feeState, uint256 value) external {
         feeState.treasure -= value;
     }
 
-    function spendReward(FeeState memory feeState) external pure {
+    function spendReward(FeeState storage feeState) external {
         feeState.treasure -= reward(feeState);
     }
 
-    function deposit(FeeState memory feeState, uint256 value) external pure {
+    function deposit(FeeState storage feeState, uint256 value) external {
         feeState.treasure += value;
         feeState.premium += calcPremium(value);
     }

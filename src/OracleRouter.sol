@@ -89,7 +89,7 @@ contract OracleRouter is
         address sender
     ) external payable returns (bool) {
         return
-            IOracle(_implementation).addRequest(
+            IOracle(_implementation).addRequest{value: msg.value}(
                 callbackContract,
                 callbackArgs,
                 nonce,
@@ -98,7 +98,7 @@ contract OracleRouter is
     }
 
     function handlePayment() public payable returns (bool) {
-        return IOracle(_implementation).handlePayment();
+        return IOracle(_implementation).handlePayment{value: msg.value}();
     }
 
     function processingFee() external view returns (uint256) {

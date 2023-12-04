@@ -19,7 +19,7 @@ contract FakedOracleProxy is OracleRouter, IFakedOracle {
         address sender
     ) external payable returns (bool) {
         return
-            IFakedOracle(implementation()).addFakeRequest(
+            IFakedOracle(implementation()).addFakeRequest{value: msg.value}(
                 callbackContract,
                 callbackArgs,
                 nonce,

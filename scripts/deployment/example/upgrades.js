@@ -34,6 +34,7 @@ async function upgradeMockOracle(lock, linkTokenAddr) {
         amountIn: hre.ethers.parseEther("10"),
       },
       Math.ceil(Math.random() * 100),
+      { value: hre.ethers.parseEther("0.01") },
     );
   }
 

@@ -48,14 +48,14 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         verifier = IVerifierProxy(_verifier);
         priceFeed = AggregatorV3Interface(_priceFeed);
         requestTimeout = _requestTimeout;
+        _feeState.processingFee = FeeManagerLib.toDec(1) / 100;
     }
 
     function handlePayment() public payable returns (bool) {
-        uint256 fee = FeeManagerLib.toDec(msg.value);
-        if (fee < _feeState.processingFee) {
+        if (msg.value < _feeState.processingFee) {
             revert FeeIsTooSmall();
         }
-        _feeState.deposit(fee);
+        _feeState.deposit(msg.value);
         return true;
     }
 
@@ -226,7 +226,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         bool executable = reqStats.status == RequestLib.RequestStatus.Pending &&
             reqStats.blockNumber + requestTimeout <= block.number;
 
-        return (id, executable, _feeState.treasure);
+        return (id, executable, _feeState.reward());
     }
 
     // Utils

@@ -34,8 +34,8 @@ contract SimpleConsumer is IOracleConsumerContract {
     function trigger(
         CustomRequestParams memory params,
         uint256 nonce
-    ) public returns (bool) {
-        bool success = IOracle(oracle).addRequest(
+    ) public payable returns (bool) {
+        bool success = IOracle(oracle).addRequest{value: msg.value}(
             address(this),
             abi.encode(params),
             nonce,
@@ -50,8 +50,8 @@ contract SimpleConsumer is IOracleConsumerContract {
     function triggerFake(
         CustomRequestParams memory params,
         uint256 nonce
-    ) public returns (bool) {
-        bool success = IFakedOracle(oracle).addFakeRequest(
+    ) public payable returns (bool) {
+        bool success = IFakedOracle(oracle).addFakeRequest{value: msg.value}(
             address(this),
             abi.encode(params),
             nonce,

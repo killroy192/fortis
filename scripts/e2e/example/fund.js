@@ -1,4 +1,4 @@
-const { ethers } = require("hardhat");
+const hre = require("hardhat");
 const { getDeploymentLockData } = require("../../common");
 
 /**
@@ -13,17 +13,15 @@ async function main() {
 
   const usdc = await hre.ethers.getContractAt("FUSDC", lock.FUSDC.addr);
 
-  await usdc.mint(lock.SwapApp.addr, ethers.parseEther("0.0001"));
+  await usdc.mint(lock.SwapApp.addr, hre.ethers.parseEther("0.0001"));
 
   console.log("done\n");
 
   console.log("fund oracle treasure with eth");
 
-  const amountIn = ethers.parseEther("0.001");
-
   const oracle = await hre.ethers.getContractAt("FakedOracleProxy", lock.FakedOracleProxy.addr);
 
-  await oracle.handlePayment({ value: ethers.parseEther("100") });
+  await oracle.handlePayment({ value: hre.ethers.parseEther("0.01") });
 
   console.log("done\n");
 }
