@@ -7,7 +7,7 @@ import Image from "next/image";
 import {Address, createPublicClient, http, parseEther, parseUnits} from "viem";
 import {
   useAccount,
-  useBalance, useContractRead,
+  useBalance, useContractEvent,
   useContractWrite,
 } from "wagmi";
 
@@ -17,7 +17,6 @@ import { DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormLabel } from "@/components//ui/form";
-import { useDatafeed } from "@/app/datafeed-provider";
 import {ExchangePlatform, Pair} from "@/_types";
 import { useState } from "react";
 import {
@@ -43,6 +42,7 @@ const coder = new ethers.AbiCoder();
 
 const TradeDialog = ({ pair, isFallbacked = false }: { pair: Pair, isFallbacked: boolean }) => {
   const [isLoading, setIsLoading] = useState(false);
+  let fallbackInterval: NodeJS.Timeout | undefined;
   const [txHash, setTxHash] = useState<Address | undefined>();
   const { address } = useAccount();
   const { prices: exchangePrices } = useSocket();
@@ -50,6 +50,22 @@ const TradeDialog = ({ pair, isFallbacked = false }: { pair: Pair, isFallbacked:
   const [fUSDC] = useState<Address | undefined>(usdcConfig.address);
   const { data: wethBalance } = useBalance({ address, token: fWETH });
   const { data: usdcBalance } = useBalance({ address, token: fUSDC });
+  const unwatchTradeExecuted = useContractEvent({
+    ...swapAppConfig,
+    eventName: "TradeExecuted",
+    listener(event) {
+      console.log(event);
+      toast({
+        title: "Swap completed:",
+        description: `Successfully exchanged WETH for USDC`,
+        variant: "success",
+      });
+      setIsLoading(false)
+        setTxHash(event[1].transactionHash);
+      unwatchTradeExecuted?.();
+      clearInterval(fallbackInterval);
+    }
+  })
 
   const prices = exchangePrices[ExchangePlatform.COINBASE];
 
@@ -129,7 +145,7 @@ const TradeDialog = ({ pair, isFallbacked = false }: { pair: Pair, isFallbacked:
         ],
         [tradeArgs],
     );
-    const fallbackInterval = setInterval(async() => {
+    fallbackInterval = setInterval(async() => {
       console.log('fallback interval in');
       const requestStatus = await client.readContract({
         ...oracleConfig,
@@ -148,13 +164,6 @@ const TradeDialog = ({ pair, isFallbacked = false }: { pair: Pair, isFallbacked:
         }
       }
     }, 1000);
-    toast({
-      title: "Swap completed:",
-      description: `${values.from} ${wethBalance?.symbol} for ${values.to} ${usdcBalance?.symbol}`,
-      variant: "success",
-    });
-    setIsLoading(false);
-    setTxHash(result.hash);
   }
 
   return txHash ? (
