@@ -7,9 +7,8 @@ import Image from "next/image";
 import { Address, parseEther, parseUnits } from "viem";
 import {
   useAccount,
-  useBalance, useContractRead,
+  useBalance,
   useContractWrite,
-  useSendTransaction,
 } from "wagmi";
 
 import { toast } from "@/components/ui/use-toast";
@@ -18,7 +17,6 @@ import { DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormLabel } from "@/components//ui/form";
-import { symbols } from "@/config/trade";
 import { useDatafeed } from "@/app/datafeed-provider";
 import { Pair } from "@/_types";
 import { useState } from "react";
@@ -53,13 +51,6 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
   });
 
   const fromAmount = form.watch("from");
-  const { sendTransactionAsync: wrapEth } = useSendTransaction({
-    onSuccess() {
-      toast({
-        title: `Wrapped ${fromAmount} ETH`,
-      });
-    },
-  });
 
   const { writeAsync: approveWeth } = useContractWrite({
     ...wethConfig,
