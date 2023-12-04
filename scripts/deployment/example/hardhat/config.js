@@ -2,10 +2,13 @@ const externals = require("../../../config.externals").hardhat;
 
 module.exports = [
   {
+    contract: "AutomationEmitter",
+  },
+  {
     contract: "RequestLib",
   },
   {
-    contract: "AutomationEmitter",
+    contract: "FeeManagerLib",
   },
   {
     contract: "FakedOracle",
@@ -24,6 +27,7 @@ module.exports = [
     deployerOptions: {
       libs: {
         RequestLib: (deploymentLock) => deploymentLock.RequestLib.addr,
+        FeeManagerLib: (deploymentLock) => deploymentLock.FeeManagerLib.addr,
       },
     },
   },

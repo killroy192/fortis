@@ -2,10 +2,13 @@ const externals = require("../../../config.externals")["arbitrum-sepolia"];
 
 module.exports = [
   {
+    contract: "AutomationEmitter",
+  },
+  {
     contract: "RequestLib",
   },
   {
-    contract: "AutomationEmitter",
+    contract: "FeeManagerLib",
   },
   {
     contract: "FakedOracle",
@@ -19,11 +22,12 @@ module.exports = [
       // eth/usd data feed
       externals.datafeed,
       // timeout
-      60,
+      5,
     ],
     deployerOptions: {
       libs: {
         RequestLib: (deploymentLock) => deploymentLock.RequestLib.addr,
+        FeeManagerLib: (deploymentLock) => deploymentLock.FeeManagerLib.addr,
       },
     },
   },

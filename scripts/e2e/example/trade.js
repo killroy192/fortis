@@ -50,7 +50,12 @@ async function main() {
   console.log("done\n");
   console.log("execute trade");
   await consumer.trade(tradeArgs, nonce);
-  console.log("Successfully traded fWETH tokens for fUSDC");
+
+  const usdc = await hre.ethers.getContractAt("FUSDC", lock.FUSDC.addr);
+
+  const balance = await usdc.balanceOf(signerAddr);
+
+  console.log("Successfully traded fWETH tokens for fUSDC", balance);
 
   console.log("run fallback check logic..");
   const oracle = await hre.ethers.getContractAt(

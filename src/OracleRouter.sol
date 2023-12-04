@@ -72,7 +72,7 @@ contract OracleRouter is
         bytes memory callbackArgs,
         uint256 nonce,
         address sender
-    ) public view returns (bytes32, bool) {
+    ) public view returns (bytes32, bool, uint256) {
         return
             IOracle(_implementation).previewFallbackCall(
                 callbackContract,
@@ -87,7 +87,7 @@ contract OracleRouter is
         bytes memory callbackArgs,
         uint256 nonce,
         address sender
-    ) external returns (bool) {
+    ) external payable returns (bool) {
         return
             IOracle(_implementation).addRequest(
                 callbackContract,
@@ -97,8 +97,23 @@ contract OracleRouter is
             );
     }
 
-    fallback() external payable {}
+    function handlePayment() public payable returns (bool) {
+        return IOracle(_implementation).handlePayment();
+    }
 
-    // solhint-disable-next-line no-empty-blocks
-    receive() external payable {}
+    function processingFee() external view returns (uint256) {
+        return IOracle(_implementation).processingFee();
+    }
+
+    function processingFeeDecimals() external view returns (uint256) {
+        return IOracle(_implementation).processingFeeDecimals();
+    }
+
+    fallback() external payable {
+        handlePayment();
+    }
+
+    receive() external payable {
+        handlePayment();
+    }
 }

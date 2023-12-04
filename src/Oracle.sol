@@ -2,45 +2,69 @@
 pragma solidity ^0.8.16;
 
 import {Log} from "@chainlink/contracts/src/v0.8/automation/interfaces/ILogAutomation.sol";
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IAsset} from "./interfaces/IAsset.sol";
 import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
 import {IFeeManager} from "./interfaces/IFeeManager.sol";
 import {IOracle} from "./interfaces/IOracle.sol";
 import {IOracleConsumerContract, ForwardData, FeedType} from "./interfaces/IOracleCallBackContract.sol";
-import {IRequestsManager} from "./interfaces/IRequestsManager.sol";
 import {IAutomationEmitter} from "./interfaces/IAutomationEmitter.sol";
 
 import {RequestLib} from "./libs/RequestLib.sol";
+import {FeeManagerLib} from "./libs/FeeManagerLib.sol";
 
 import {DataStreamConsumer} from "./DataStreamConsumer.sol";
-import {PriceFeedConsumer} from "./PriceFeedConsumer.sol";
-import {RequestsManager} from "./RequestsManager.sol";
 
-contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
-    error DuplicatedRequestCreation(bytes32 id);
+contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
     error InvalidRequestsExecution(bytes32 id);
     error FailedRequestsConsumption(bytes32 id);
+    error FeeIsTooSmall();
 
     IAutomationEmitter public immutable emitter;
     IVerifierProxy public immutable verifier;
-    RequestsManager public immutable requestManager;
+    AggregatorV3Interface public immutable priceFeed;
     // blocks from request initialization
     uint256 public immutable requestTimeout;
+
+    // fee state
+    using FeeManagerLib for FeeManagerLib.FeeState;
+    FeeManagerLib.FeeState private _feeState;
+
+    using RequestLib for RequestLib.Requests;
+    RequestLib.Requests private _requests;
 
     // Find a complete list of IDs and verifiers at https://docs.chain.link/data-streams/stream-ids
     constructor(
         address _emmiter,
         address _verifier,
         string memory _dataStreamfeedId,
-        address _priceFeedId,
+        address _priceFeed,
         uint256 _requestTimeout
-    ) DataStreamConsumer(_dataStreamfeedId) PriceFeedConsumer(_priceFeedId) {
+    ) DataStreamConsumer(_dataStreamfeedId) {
         emitter = IAutomationEmitter(_emmiter);
         verifier = IVerifierProxy(_verifier);
-        requestManager = new RequestsManager();
+        priceFeed = AggregatorV3Interface(_priceFeed);
         requestTimeout = _requestTimeout;
+    }
+
+    function handlePayment() public payable returns (bool) {
+        uint256 fee = FeeManagerLib.toDec(msg.value);
+        if (fee < _feeState.processingFee) {
+            revert FeeIsTooSmall();
+        }
+        _feeState.deposit(fee);
+        return true;
+    }
+
+    function processingFee() external view returns (uint256) {
+        return _feeState.processingFee;
+    }
+
+    function processingFeeDecimals() external pure returns (uint256) {
+        return FeeManagerLib.decimals();
     }
 
     function _addRequest(
@@ -49,15 +73,8 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
         uint256 nonce,
         address sender
     ) internal {
-        (
-            bytes32 id,
-            IRequestsManager.RequestStats memory reqStats
-        ) = getRequestProps(callbackContract, callbackArgs, nonce, sender);
-        // prevent duplicated request execution
-        if (reqStats.status == IRequestsManager.RequestStatus.Pending) {
-            revert DuplicatedRequestCreation(id);
-        }
-        requestManager.addRequest(id);
+        handlePayment();
+        _requests.addRequest(callbackContract, callbackArgs, nonce, sender);
     }
 
     function addRequest(
@@ -65,7 +82,7 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
         bytes memory callbackArgs,
         uint256 nonce,
         address sender
-    ) external returns (bool) {
+    ) external payable returns (bool) {
         _addRequest(callbackContract, callbackArgs, nonce, sender);
         return
             emitter.emitAutomationEvent(
@@ -93,13 +110,15 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
             address sender
         ) = abi.decode(extraData, (address, bytes, uint256, address));
 
-        (
-            bytes32 id,
-            IRequestsManager.RequestStats memory reqStats
-        ) = getRequestProps(callbackContract, callbackArgs, nonce, sender);
+        (bytes32 id, RequestLib.RequestStats memory reqStats) = getRequestProps(
+            callbackContract,
+            callbackArgs,
+            nonce,
+            sender
+        );
 
         // prevent duplicated request execution
-        if (reqStats.status != IRequestsManager.RequestStatus.Pending) {
+        if (reqStats.status != RequestLib.RequestStatus.Pending) {
             revert InvalidRequestsExecution(id);
         }
 
@@ -109,24 +128,22 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
         // Report verification fees
         IFeeManager feeManager = IFeeManager(address(verifier.s_feeManager()));
 
-        address feeTokenAddress = feeManager.i_linkAddress();
+        address feeNativeTokenAddress = feeManager.i_nativeAddress();
         (IAsset memory fee, , ) = feeManager.getFeeAndReward(
             address(this),
             reportData,
-            feeTokenAddress
+            feeNativeTokenAddress
         );
 
-        // Approve rewardManager to spend this contract's balance in fees
-        IERC20(feeTokenAddress).approve(
-            address(feeManager.i_rewardManager()),
-            fee.amount
-        );
+        _feeState.updateFee(fee.amount);
 
         // Verify the report
         bytes memory verifiedReportData = verifier.verify(
             unverifiedReport,
-            abi.encode(feeTokenAddress)
+            abi.encode(feeNativeTokenAddress)
         );
+
+        _feeState.spend(fee.amount);
 
         // Decode verified report data into BasicReport struct
         BasicReport memory report = abi.decode(
@@ -146,7 +163,7 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
             revert FailedRequestsConsumption(id);
         }
 
-        requestManager.fulfillRequest(id);
+        _requests.fulfillRequest(id);
     }
 
     function fallbackCall(
@@ -154,8 +171,8 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
         bytes memory callbackArgs,
         uint256 nonce,
         address sender
-    ) external returns (bool) {
-        (bytes32 id, bool executable) = previewFallbackCall(
+    ) external nonReentrant returns (bool) {
+        (bytes32 id, bool executable, uint256 reward) = previewFallbackCall(
             callbackContract,
             callbackArgs,
             nonce,
@@ -166,7 +183,7 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
             revert InvalidRequestsExecution(id);
         }
 
-        int256 price = getLatestPrice();
+        (, int256 price, , , ) = priceFeed.latestRoundData();
 
         bool success = IOracleConsumerContract(callbackContract).consume(
             ForwardData({
@@ -180,7 +197,17 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
             revert FailedRequestsConsumption(id);
         }
 
-        return requestManager.fulfillRequest(id);
+        (bool rewardingSuccess, ) = payable(msg.sender).call{value: reward}("");
+
+        if (!rewardingSuccess) {
+            revert FailedRequestsConsumption(id);
+        }
+
+        _requests.fulfillRequest(id);
+
+        _feeState.spendReward();
+
+        return true;
     }
 
     function previewFallbackCall(
@@ -188,17 +215,18 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
         bytes memory callbackArgs,
         uint256 nonce,
         address sender
-    ) public view returns (bytes32, bool) {
-        (
-            bytes32 id,
-            IRequestsManager.RequestStats memory reqStats
-        ) = getRequestProps(callbackContract, callbackArgs, nonce, sender);
+    ) public view returns (bytes32, bool, uint256) {
+        (bytes32 id, RequestLib.RequestStats memory reqStats) = getRequestProps(
+            callbackContract,
+            callbackArgs,
+            nonce,
+            sender
+        );
 
-        bool executable = reqStats.status ==
-            IRequestsManager.RequestStatus.Pending &&
-            reqStats.blockNumber + requestTimeout > block.number;
+        bool executable = reqStats.status == RequestLib.RequestStatus.Pending &&
+            reqStats.blockNumber + requestTimeout <= block.number;
 
-        return (id, executable);
+        return (id, executable, _feeState.treasure);
     }
 
     // Utils
@@ -208,7 +236,7 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
         bytes memory callbackArgs,
         uint256 nonce,
         address sender
-    ) public view returns (bytes32, RequestsManager.RequestStats memory) {
+    ) public view returns (bytes32, RequestLib.RequestStats memory) {
         bytes32 id = RequestLib.generateId(
             callbackContract,
             callbackArgs,
@@ -216,6 +244,16 @@ contract Oracle is IOracle, DataStreamConsumer, PriceFeedConsumer {
             sender
         );
 
-        return (id, requestManager.getRequest(id));
+        return (id, _requests.getRequest(id));
+    }
+
+    // fallbacks
+
+    fallback() external payable {
+        handlePayment();
+    }
+
+    receive() external payable {
+        handlePayment();
     }
 }

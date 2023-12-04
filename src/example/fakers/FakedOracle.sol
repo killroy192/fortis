@@ -36,7 +36,7 @@ contract FakedOracle is Oracle, IFakedOracle {
         bytes memory callbackArgs,
         uint256 nonce,
         address sender
-    ) external returns (bool) {
+    ) external payable returns (bool) {
         _addRequest(callbackContract, callbackArgs, nonce, sender);
         emit FakeAutomationTrigger(
             callbackContract,
