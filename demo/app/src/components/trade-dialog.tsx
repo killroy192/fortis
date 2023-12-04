@@ -32,7 +32,7 @@ const formSchema = z.object({
   to: z.coerce.number(),
 });
 
-const TradeDialog = ({ pair }: { pair: Pair }) => {
+const TradeDialog = ({ pair, isFallbacked = false }: { pair: Pair, isFallbacked: boolean }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [txHash, setTxHash] = useState<Address | undefined>();
   const { address } = useAccount();
@@ -54,23 +54,6 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
 
   const { writeAsync: approveWeth } = useContractWrite({
     ...wethConfig,
-    functionName: "approve",
-    onError(error) {
-      toast({
-        variant: "destructive",
-        title: error.name,
-        description: error.message,
-      });
-    },
-    onSuccess() {
-      toast({
-        title: "Approve transaction has been sent",
-      });
-    },
-  });
-
-  const { writeAsync: approveUsdc } = useContractWrite({
-    ...usdcConfig,
     functionName: "approve",
     onError(error) {
       toast({
@@ -113,12 +96,6 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
         args: [swapAppConfig.address, parseEther(`${fromAmount}`)],
       });
     }
-
-    // if (fWETH == usdcConfig.address) {
-    //   await approveUsdc({
-    //     args: [swapAppConfig.address, parseEther(`${fromAmount}`)],
-    //   });
-    // }
 
     const nonce = BigInt(new Date().getTime());
     const tradeArgs = {recipient: address!,tokenIn: fWETH!,tokenOut: fUSDC!,amountIn} as const;
