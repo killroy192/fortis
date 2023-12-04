@@ -4,10 +4,10 @@ import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
-import { Address, parseEther, parseUnits } from "viem";
+import {Address, createPublicClient, http, parseEther, parseUnits} from "viem";
 import {
   useAccount,
-  useBalance,
+  useBalance, useContractRead,
   useContractWrite,
 } from "wagmi";
 
@@ -26,11 +26,19 @@ import {
   usdcConfig, oracleConfig,
 } from "@/config/contracts";
 import { Check } from "lucide-react";
+import {arbitrumSepolia} from 'viem/chains';
+import {ethers} from "ethers";
 
 const formSchema = z.object({
   from: z.coerce.number().gt(0),
   to: z.coerce.number(),
 });
+
+const client = createPublicClient({
+  chain: arbitrumSepolia,
+  transport: http(),
+})
+const coder = new ethers.AbiCoder();
 
 const TradeDialog = ({ pair, isFallbacked = false }: { pair: Pair, isFallbacked: boolean }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -69,22 +77,30 @@ const TradeDialog = ({ pair, isFallbacked = false }: { pair: Pair, isFallbacked:
     },
   });
 
-  const { writeAsync: trade } = useContractWrite({
-    ...swapAppConfig,
-    functionName: "trade",
-    onError(error) {
-      toast({
-        variant: "destructive",
-        title: error.name,
-        description: error.message,
-      });
-    },
-    onSuccess() {
-      toast({
-        title: "Swap in progress",
-      });
-    },
-  });
+
+    const { writeAsync: trade } = useContractWrite({
+      ...swapAppConfig,
+      functionName: isFallbacked ? "notAutomatedTrade" : "trade",
+      onError(error) {
+        toast({
+          variant: "destructive",
+          title: error.name,
+          description: error.message,
+        });
+      },
+      onSuccess() {
+        toast({
+          title: "Swap in progress",
+        });
+      },
+    });
+
+    const {writeAsync: fallback} = useContractWrite({
+      ...oracleConfig,
+      functionName: "fallbackCall",
+    })
+
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -103,20 +119,37 @@ const TradeDialog = ({ pair, isFallbacked = false }: { pair: Pair, isFallbacked:
     const result = await trade({
       args: [tradeArgs, nonce],
     });
-    // const { refetch} = useContractRead({
-    //   ...oracleConfig,
-    //   functionName: "previewFallbackCall",
-    //   args: [swapAppConfig.address, tradeArgs, nonce, address] as unknown,
-    // });
-    // setInterval(async() => {
-    //   const result = await refetch();
-    //   console.log(result);
-    // }, 1000);
-    // toast({
-    //   title: "Swap completed:",
-    //   description: `${values.from} ${wethBalance?.symbol} for ${values.to} ${usdcBalance?.symbol}`,
-    //   variant: "success",
-    // });
+    const swapAddress: `0x${string}` = swapAppConfig.address;
+    const bytesCallbackArgs = coder.encode(
+        [
+          "tuple(address recipient, address tokenIn, address tokenOut, uint256 amountIn)",
+        ],
+        [tradeArgs],
+    );
+    const fallbackInterval = setInterval(async() => {
+      console.log('fallback interval in');
+      const requestStatus = await client.readContract({
+        ...oracleConfig,
+        functionName: "previewFallbackCall",
+        args: [swapAddress, bytesCallbackArgs, nonce, address!],
+      });
+      const isFallbackCallable = (requestStatus as [string, boolean])[1];
+      if(isFallbackCallable) {
+        clearInterval(fallbackInterval);
+        const isCalled = confirm('Fallback is callable, do you want to call it?');
+        if(isCalled) {
+          const fallbackResult = await fallback({
+            args: [swapAddress, bytesCallbackArgs, nonce, address!],
+          });
+          console.log(fallbackResult, result);
+        }
+      }
+    }, 1000);
+    toast({
+      title: "Swap completed:",
+      description: `${values.from} ${wethBalance?.symbol} for ${values.to} ${usdcBalance?.symbol}`,
+      variant: "success",
+    });
     setIsLoading(false);
     setTxHash(result.hash);
   }

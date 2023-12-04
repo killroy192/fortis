@@ -39,7 +39,7 @@ export const TradeButton = ({ pair, isFallbacked = false }: { pair: Pair, isFall
             })
           }
         >
-          Trade
+          { isFallbacked ? "Trade FB" : "Trade" }
         </Button>
       )}
       <DialogContent className="max-w-[400px] bg-[#181D29] pt-8 sm:max-w-[400px]">
