@@ -4,13 +4,14 @@ pragma solidity ^0.8.16;
 import {Log} from "@chainlink/contracts/src/v0.8/automation/interfaces/ILogAutomation.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {LinkTokenInterface} from "@chainlink/contracts/src/v0.8/shared/interfaces/LinkTokenInterface.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
 import {IOracle} from "./interfaces/IOracle.sol";
 import {IOracleConsumerContract, ForwardData, FeedType} from "./interfaces/IOracleCallBackContract.sol";
 import {IAutomationEmitter} from "./interfaces/IAutomationEmitter.sol";
+import {IAutomationRegistry} from "./interfaces/IAutomationRegistry.sol";
 
 import {RequestLib} from "./libs/RequestLib.sol";
 import {FeeLib} from "./libs/FeeLib.sol";
@@ -27,6 +28,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
     error InvalidKeeperId(uint256 id, uint256 expectedId);
     error InvalidTransferAmount(uint256 maxReward);
     error FailedLinkTransfer();
+    error OnRegisterFailed(uint256 id, address sender);
 
     IAutomationEmitter public immutable emitter;
 
@@ -74,10 +76,12 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
     }
 
     function onRegister(uint256 id) external {
-        if (!meta.approved && msg.sender == meta.creator) {
-            meta.id = id;
-            meta.approved = true;
+        if (meta.approved || msg.sender != meta.creator) {
+            revert OnRegisterFailed(id, msg.sender);
         }
+        meta.id = id;
+        meta.approved = true;
+        emit SetOracleId(id);
     }
 
     function _addRequest(
@@ -222,29 +226,24 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
 
     /**
      * @notice uses LINK's transferAndCall to LINK and add funding to an upkeep
-     * @dev safe to cast uint256 to uint96 as total LINK supply is under UINT96MAX
-     * @param sender the account which transferred the funds
-     * @param amount number of LINK transfer
      */
-    function onTokenTransfer(
+    function swap(
         address sender,
-        uint256 amount,
-        uint256 id
+        uint256 amount
     ) external nonReentrant returns (bool) {
-        (bool doTransfer, uint256 reward) = onTokenTransferPreview(
-            msg.sender,
-            amount,
-            id
-        );
+        (bool doTransfer, uint256 reward) = swapPreview(amount);
 
         if (doTransfer) {
-            bool success = link.transferAndCall(
-                registry,
-                amount,
-                abi.encode(id)
-            );
+            bool success = link.transferFrom(sender, address(this), amount);
 
             if (!success) revert FailedLinkTransfer();
+
+            link.approve(registry, amount);
+
+            IAutomationRegistry(registry).addFunds(
+                meta.id,
+                SafeCast.toUint96(amount)
+            );
 
             (bool rewardingSuccess, ) = payable(sender).call{value: reward}("");
             return rewardingSuccess;
@@ -252,26 +251,18 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         return doTransfer;
     }
 
-    function onTokenTransferPreview(
-        address token,
-        uint256 amount,
-        uint256 id
-    ) public view returns (bool, uint256) {
-        if (token != address(link)) revert OnlyCallableByLINKToken();
-        if (!meta.approved || id != meta.id)
-            revert InvalidKeeperId(id, meta.id);
-        (, int256 linkPrice, , , ) = priceFeed.latestRoundData();
-        // swap using 0x3ec8593F930EA45ea58c968260e6e9FF53FC934f
-        uint256 reward = uint256(linkPrice) *
-            amount *
-            (FeeLib.toDec(1) + FeeLib.swapPremium());
+    function swapPreview(uint256 amount) public view returns (bool, uint256) {
+        (, int256 linkPrice, , , ) = linkNativeFeed.latestRoundData();
+        uint256 reward = FeeLib.fromDec(
+            uint256(linkPrice) *
+                FeeLib.fromDec(
+                    amount * (FeeLib.toDec(1) + FeeLib.swapPremium())
+                )
+        );
 
         uint256 maxReward = address(this).balance / 5;
 
-        if (address(this).balance / 5 < reward)
-            revert InvalidTransferAmount(maxReward);
-
-        return (true, reward);
+        return (maxReward >= reward, reward);
     }
 
     // Utils

@@ -5,6 +5,8 @@ pragma solidity ^0.8.16;
 import {RequestLib} from "../libs/RequestLib.sol";
 
 interface IOracle {
+    event SetOracleId(uint256 id);
+
     struct UpKeepMeta {
         uint256 id;
         bool approved;
@@ -34,15 +36,7 @@ interface IOracle {
         address sender
     ) external view returns (bytes32, bool, uint256);
 
-    function onTokenTransfer(
-        address sender,
-        uint256 amount,
-        uint256 id
-    ) external returns (bool);
+    function swap(address sender, uint256 amount) external returns (bool);
 
-    function onTokenTransferPreview(
-        address token,
-        uint256 amount,
-        uint256 id
-    ) external view returns (bool, uint256);
+    function swapPreview(uint256 amount) external view returns (bool, uint256);
 }

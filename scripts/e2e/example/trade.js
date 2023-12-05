@@ -55,12 +55,15 @@ async function main() {
     lock.FakedOracleProxy.addr,
   );
 
-  const fee = await oracle.baseFee();
-  await consumer.trade(tradeArgs, nonce, { value: fee });
+  const initBalance = await usdc.balanceOf(signerAddr);
+
+  await consumer.trade(tradeArgs, nonce, {
+    value: hre.ethers.parseEther("0.01"),
+  });
 
   const usdc = await ethers.getContractAt("FUSDC", lock.FUSDC.addr);
 
-  const balance = await usdc.balanceOf(signerAddr);
+  const balance = initBalance - await usdc.balanceOf(signerAddr);
 
   console.log("Successfully traded fWETH tokens for fUSDC", balance);
 

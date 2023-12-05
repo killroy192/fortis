@@ -101,21 +101,12 @@ contract OracleRouter is
         return IOracle(_implementation).onRegister(id);
     }
 
-    function onTokenTransfer(
-        address sender,
-        uint256 amount,
-        uint256 id
-    ) external returns (bool) {
-        return IOracle(_implementation).onTokenTransfer(sender, amount, id);
+    function swap(address sender, uint256 amount) external returns (bool) {
+        return IOracle(_implementation).swap(sender, amount);
     }
 
-    function onTokenTransferPreview(
-        address link,
-        uint256 amount,
-        uint256 id
-    ) public view returns (bool, uint256) {
-        return
-            IOracle(_implementation).onTokenTransferPreview(link, amount, id);
+    function swapPreview(uint256 amount) external view returns (bool, uint256) {
+        return IOracle(_implementation).swapPreview(amount);
     }
 
     // solhint-disable-next-line no-complex-fallback

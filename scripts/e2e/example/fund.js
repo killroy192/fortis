@@ -16,21 +16,6 @@ async function main() {
   await usdc.mint(lock.SwapApp.addr, hre.ethers.parseEther("0.0001"));
 
   console.log("done\n");
-
-  console.log("fund oracle treasure with eth");
-
-  const oracle = await hre.ethers.getContractAt(
-    "FakedOracleProxy",
-    lock.FakedOracleProxy.addr,
-  );
-
-  const fee = await oracle.baseFee();
-
-  console.log("funding fee", hre.ethers.formatEther(fee));
-
-  await oracle.handlePayment({ value: fee });
-
-  console.log("done\n");
 }
 
 // We recommend this pattern to be able to use async/await everywhere

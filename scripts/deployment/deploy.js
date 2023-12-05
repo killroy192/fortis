@@ -22,7 +22,7 @@ const getLibrariesDynamically = (deploymentLock, config = {}) =>
 const deployOnlyChanged =
   (deploymentConfig) =>
   async (deploymentLock = {}) => {
-    const { contract, deployerOptions = {}, args = [] } = deploymentConfig;
+    const { contract, deployerOptions = {}, args = [], skipVerify } = deploymentConfig;
 
     console.log("prepare deployment libraries");
 
@@ -69,7 +69,7 @@ const deployOnlyChanged =
 
     console.log("Contract deployed, address:", contractAddress);
 
-    if (isVerifyNetwork()) {
+    if (isVerifyNetwork() && !skipVerify) {
       console.log("verify newly deployed contract...");
 
       await hre.run("verify:verify", {

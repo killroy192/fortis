@@ -8,7 +8,10 @@ module.exports = [
     contract: "RequestLib",
   },
   {
-    contract: "FeeManagerLib",
+    contract: "FeeLib",
+  },
+  {
+    contract: "VerifierLib",
   },
   {
     contract: "FakedOracle",
@@ -21,15 +24,23 @@ module.exports = [
       externals.streamId,
       // eth/usd data feed
       externals.datafeed,
+      // link/eth data feed
+      externals.linkNativeFeed,
+      // link token
+      externals.linkToken,
+      // registry
+      externals.registry,
       // timeout
       5,
     ],
     deployerOptions: {
       libs: {
         RequestLib: (deploymentLock) => deploymentLock.RequestLib.addr,
-        FeeManagerLib: (deploymentLock) => deploymentLock.FeeManagerLib.addr,
+        FeeLib: (deploymentLock) => deploymentLock.FeeLib.addr,
+        VerifierLib: (deploymentLock) => deploymentLock.VerifierLib.addr,
       },
     },
+    skipVerify: true,
   },
   {
     contract: "FakedOracleProxy",
