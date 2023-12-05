@@ -21,7 +21,11 @@ async function main() {
 
   const oracle = await hre.ethers.getContractAt("FakedOracleProxy", lock.FakedOracleProxy.addr);
 
-  await oracle.handlePayment({ value: hre.ethers.parseEther("0.01") });
+  const fee = await oracle.processingFee();
+
+  console.log("funding fee", hre.ethers.formatEther(fee));
+
+  await oracle.handlePayment({ value: fee });
 
   console.log("done\n");
 }

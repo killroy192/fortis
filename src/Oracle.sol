@@ -48,7 +48,6 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         verifier = IVerifierProxy(_verifier);
         priceFeed = AggregatorV3Interface(_priceFeed);
         requestTimeout = _requestTimeout;
-        _feeState.processingFee = FeeManagerLib.toDec(1) / 100;
     }
 
     function handlePayment() public payable returns (bool) {
@@ -60,6 +59,9 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
     }
 
     function processingFee() external view returns (uint256) {
+        if (_feeState.processingFee == 0) {
+            return FeeManagerLib.toDec(1) / 100;
+        }
         return _feeState.processingFee;
     }
 
@@ -128,19 +130,18 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         // Report verification fees
         IFeeManager feeManager = IFeeManager(address(verifier.s_feeManager()));
 
-        address feeNativeTokenAddress = feeManager.i_nativeAddress();
         (IAsset memory fee, , ) = feeManager.getFeeAndReward(
             address(this),
             reportData,
-            feeNativeTokenAddress
+            feeManager.i_nativeAddress()
         );
 
         _feeState.updateFee(fee.amount);
 
         // Verify the report
-        bytes memory verifiedReportData = verifier.verify(
+        bytes memory verifiedReportData = verifier.verify{value: fee.amount}(
             unverifiedReport,
-            abi.encode(feeNativeTokenAddress)
+            abi.encode(fee.assetAddress)
         );
 
         _feeState.spend(fee.amount);

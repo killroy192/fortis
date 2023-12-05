@@ -18,8 +18,6 @@ async function main() {
     lock[hre.network.name].FakedOracleProxy.addr,
   );
 
-  const fee = await oracle.processingFee();
-
   await consumer.trigger(
     {
       tokenIn: hre.ethers.ZeroAddress,
@@ -27,7 +25,7 @@ async function main() {
       amountIn: hre.ethers.parseEther("10"),
     },
     nonce(),
-    { value: fee }
+    { value: await oracle.processingFee() }
   );
 
   await consumer.triggerFake(
@@ -37,7 +35,7 @@ async function main() {
       amountIn: hre.ethers.parseEther("10"),
     },
     nonce(),
-    { value: fee }
+    { value: await oracle.processingFee() }
   );
 }
 

@@ -20,7 +20,7 @@ forge-build:; forge build
 
 hh-build :; npx hardhat compile
 
-test :; forge test -vvvv
+test :; forge test -vvv
 
 test-e2e :; npx hardhat test
 
