@@ -55,7 +55,7 @@ async function main() {
     lock.FakedOracleProxy.addr,
   );
 
-  const fee = await oracle.processingFee();
+  const fee = await oracle.baseFee();
   await consumer.trade(tradeArgs, nonce, { value: fee });
 
   const usdc = await ethers.getContractAt("FUSDC", lock.FUSDC.addr);

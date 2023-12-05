@@ -25,7 +25,7 @@ async function main() {
       amountIn: hre.ethers.parseEther("10"),
     },
     nonce(),
-    { value: await oracle.processingFee() }
+    { value: await oracle.baseFee() },
   );
 
   await consumer.triggerFake(
@@ -35,7 +35,7 @@ async function main() {
       amountIn: hre.ethers.parseEther("10"),
     },
     nonce(),
-    { value: await oracle.processingFee() }
+    { value: await oracle.baseFee() },
   );
 }
 

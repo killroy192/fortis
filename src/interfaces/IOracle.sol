@@ -2,7 +2,17 @@
 
 pragma solidity ^0.8.16;
 
+import {RequestLib} from "../libs/RequestLib.sol";
+
 interface IOracle {
+    struct UpKeepMeta {
+        uint256 id;
+        bool approved;
+        address creator;
+    }
+
+    function onRegister(uint256 id) external;
+
     function addRequest(
         address callbackContract,
         bytes memory callbackArgs,
@@ -24,9 +34,15 @@ interface IOracle {
         address sender
     ) external view returns (bytes32, bool, uint256);
 
-    function handlePayment() external payable returns (bool);
+    function onTokenTransfer(
+        address sender,
+        uint256 amount,
+        uint256 id
+    ) external returns (bool);
 
-    function processingFee() external view returns (uint256);
-
-    function processingFeeDecimals() external view returns (uint256);
+    function onTokenTransferPreview(
+        address token,
+        uint256 amount,
+        uint256 id
+    ) external view returns (bool, uint256);
 }

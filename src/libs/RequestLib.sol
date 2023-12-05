@@ -16,6 +16,7 @@ library RequestLib {
     struct RequestStats {
         RequestStatus status;
         uint256 blockNumber;
+        uint256 executionFee;
     }
 
     struct Requests {
@@ -47,7 +48,8 @@ library RequestLib {
         }
         requests.requests[id] = RequestStats({
             status: RequestStatus.Pending,
-            blockNumber: block.number
+            blockNumber: block.number,
+            executionFee: msg.value
         });
         emit RequestAdded(msg.sender, block.number);
         return true;
@@ -59,7 +61,8 @@ library RequestLib {
     ) external returns (bool) {
         requests.requests[_id] = RequestStats({
             status: RequestStatus.Fulfilled,
-            blockNumber: block.number
+            blockNumber: block.number,
+            executionFee: requests.requests[_id].executionFee
         });
         emit RequestFulfilled(msg.sender, block.number);
         return true;

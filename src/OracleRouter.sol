@@ -97,23 +97,35 @@ contract OracleRouter is
             );
     }
 
-    function handlePayment() public payable returns (bool) {
-        return IOracle(_implementation).handlePayment{value: msg.value}();
+    function onRegister(uint256 id) external {
+        return IOracle(_implementation).onRegister(id);
     }
 
-    function processingFee() external view returns (uint256) {
-        return IOracle(_implementation).processingFee();
+    function onTokenTransfer(
+        address sender,
+        uint256 amount,
+        uint256 id
+    ) external returns (bool) {
+        return IOracle(_implementation).onTokenTransfer(sender, amount, id);
     }
 
-    function processingFeeDecimals() external view returns (uint256) {
-        return IOracle(_implementation).processingFeeDecimals();
+    function onTokenTransferPreview(
+        address link,
+        uint256 amount,
+        uint256 id
+    ) public view returns (bool, uint256) {
+        return
+            IOracle(_implementation).onTokenTransferPreview(link, amount, id);
     }
 
+    // solhint-disable-next-line no-complex-fallback
     fallback() external payable {
-        handlePayment();
+        (bool sent, ) = _implementation.call{value: msg.value}(msg.data);
+        require(sent, "Failed to fallback");
     }
 
     receive() external payable {
-        handlePayment();
+        (bool sent, ) = _implementation.call{value: msg.value}("");
+        require(sent, "Failed to fallback");
     }
 }

@@ -9,7 +9,7 @@ const { getDeploymentLockData } = require("../../common");
 async function main() {
   const lock = (await getDeploymentLockData())[hre.network.name];
 
-  console.log("fund swapApp with minted usdc")
+  console.log("fund swapApp with minted usdc");
 
   const usdc = await hre.ethers.getContractAt("FUSDC", lock.FUSDC.addr);
 
@@ -19,9 +19,12 @@ async function main() {
 
   console.log("fund oracle treasure with eth");
 
-  const oracle = await hre.ethers.getContractAt("FakedOracleProxy", lock.FakedOracleProxy.addr);
+  const oracle = await hre.ethers.getContractAt(
+    "FakedOracleProxy",
+    lock.FakedOracleProxy.addr,
+  );
 
-  const fee = await oracle.processingFee();
+  const fee = await oracle.baseFee();
 
   console.log("funding fee", hre.ethers.formatEther(fee));
 

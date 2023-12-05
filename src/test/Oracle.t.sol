@@ -27,6 +27,9 @@ contract OracleTest is Test {
             address(0),
             "test",
             address(0),
+            address(0),
+            address(0),
+            address(0),
             10
         );
     }
@@ -40,9 +43,7 @@ contract OracleTest is Test {
             address(this)
         );
 
-        uint256 fee = oracle.processingFee();
-
-        oracle.addRequest{value: fee}(
+        oracle.addRequest{value: 1 * 10 ** 16}(
             address(this),
             abi.encodePacked("test"),
             0,
@@ -60,9 +61,7 @@ contract OracleTest is Test {
             address(this)
         );
 
-        uint256 fee = oracle.processingFee();
-
-        oracle.addRequest{value: fee}(
+        oracle.addRequest{value: 1 * 10 ** 16}(
             address(this),
             abi.encodePacked("test"),
             0,
@@ -70,7 +69,7 @@ contract OracleTest is Test {
         );
 
         vm.expectRevert();
-        oracle.addRequest{value: fee}(
+        oracle.addRequest{value: 1 * 10 ** 16}(
             address(this),
             abi.encodePacked("test"),
             0,

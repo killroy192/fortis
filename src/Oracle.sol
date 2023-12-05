@@ -3,70 +3,81 @@ pragma solidity ^0.8.16;
 
 import {Log} from "@chainlink/contracts/src/v0.8/automation/interfaces/ILogAutomation.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import {LinkTokenInterface} from "@chainlink/contracts/src/v0.8/shared/interfaces/LinkTokenInterface.sol";
 
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IAsset} from "./interfaces/IAsset.sol";
 import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
-import {IFeeManager} from "./interfaces/IFeeManager.sol";
 import {IOracle} from "./interfaces/IOracle.sol";
 import {IOracleConsumerContract, ForwardData, FeedType} from "./interfaces/IOracleCallBackContract.sol";
 import {IAutomationEmitter} from "./interfaces/IAutomationEmitter.sol";
 
 import {RequestLib} from "./libs/RequestLib.sol";
-import {FeeManagerLib} from "./libs/FeeManagerLib.sol";
+import {FeeLib} from "./libs/FeeLib.sol";
+import {VerifierLib} from "./libs/VerifierLib.sol";
 
 import {DataStreamConsumer} from "./DataStreamConsumer.sol";
 
 contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
     error InvalidRequestsExecution(bytes32 id);
     error FailedRequestsConsumption(bytes32 id);
-    error FeeIsTooSmall();
+    error FeeIsTooSmall(bytes32 id);
+    error NonZeroFeeRequired();
+    error OnlyCallableByLINKToken();
+    error InvalidKeeperId(uint256 id, uint256 expectedId);
+    error InvalidTransferAmount(uint256 maxReward);
+    error FailedLinkTransfer();
 
     IAutomationEmitter public immutable emitter;
+
     IVerifierProxy public immutable verifier;
+    using VerifierLib for IVerifierProxy;
+
     AggregatorV3Interface public immutable priceFeed;
+    AggregatorV3Interface public immutable linkNativeFeed;
+
+    LinkTokenInterface public immutable link;
+    address public immutable registry;
     // blocks from request initialization
     uint256 public immutable requestTimeout;
 
-    // fee state
-    using FeeManagerLib for FeeManagerLib.FeeState;
-    FeeManagerLib.FeeState private _feeState;
-
-    using RequestLib for RequestLib.Requests;
     RequestLib.Requests private _requests;
+    using RequestLib for RequestLib.Requests;
 
-    // Find a complete list of IDs and verifiers at https://docs.chain.link/data-streams/stream-ids
+    UpKeepMeta private meta;
+
+    modifier nonZeroPayment() {
+        if (msg.value == 0) {
+            revert NonZeroFeeRequired();
+        }
+        _;
+    }
+
     constructor(
         address _emmiter,
         address _verifier,
         string memory _dataStreamfeedId,
         address _priceFeed,
+        address _linkNativeFeed,
+        address _linkToken,
+        address _registry,
         uint256 _requestTimeout
     ) DataStreamConsumer(_dataStreamfeedId) {
         emitter = IAutomationEmitter(_emmiter);
         verifier = IVerifierProxy(_verifier);
         priceFeed = AggregatorV3Interface(_priceFeed);
+        linkNativeFeed = AggregatorV3Interface(_linkNativeFeed);
+        link = LinkTokenInterface(_linkToken);
         requestTimeout = _requestTimeout;
+        registry = _registry;
+        meta.creator = msg.sender;
     }
 
-    function handlePayment() public payable returns (bool) {
-        if (msg.value < _feeState.processingFee) {
-            revert FeeIsTooSmall();
+    function onRegister(uint256 id) external {
+        if (!meta.approved && msg.sender == meta.creator) {
+            meta.id = id;
+            meta.approved = true;
         }
-        _feeState.deposit(msg.value);
-        return true;
-    }
-
-    function processingFee() external view returns (uint256) {
-        if (_feeState.processingFee == 0) {
-            return FeeManagerLib.toDec(1) / 100;
-        }
-        return _feeState.processingFee;
-    }
-
-    function processingFeeDecimals() external pure returns (uint256) {
-        return FeeManagerLib.decimals();
     }
 
     function _addRequest(
@@ -75,7 +86,6 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         uint256 nonce,
         address sender
     ) internal {
-        handlePayment();
         _requests.addRequest(callbackContract, callbackArgs, nonce, sender);
     }
 
@@ -84,7 +94,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         bytes memory callbackArgs,
         uint256 nonce,
         address sender
-    ) external payable returns (bool) {
+    ) external payable nonZeroPayment returns (bool) {
         _addRequest(callbackContract, callbackArgs, nonce, sender);
         return
             emitter.emitAutomationEvent(
@@ -96,14 +106,13 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
     }
 
     function performUpkeep(bytes calldata performData) external override {
+        uint256 initGas = gasleft();
         // Decode the performData bytes passed in by CL Automation.
         // This contains the data returned by your implementation in checkCallback().
         (bytes[] memory signedReports, bytes memory extraData) = abi.decode(
             performData,
             (bytes[], bytes)
         );
-
-        bytes memory unverifiedReport = signedReports[0];
 
         (
             address callbackContract,
@@ -124,32 +133,8 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
             revert InvalidRequestsExecution(id);
         }
 
-        (, /* bytes32[3] reportContextData */ bytes memory reportData) = abi
-            .decode(unverifiedReport, (bytes32[3], bytes));
-
-        // Report verification fees
-        IFeeManager feeManager = IFeeManager(address(verifier.s_feeManager()));
-
-        (IAsset memory fee, , ) = feeManager.getFeeAndReward(
-            address(this),
-            reportData,
-            feeManager.i_nativeAddress()
-        );
-
-        _feeState.updateFee(fee.amount);
-
-        // Verify the report
-        bytes memory verifiedReportData = verifier.verify{value: fee.amount}(
-            unverifiedReport,
-            abi.encode(fee.assetAddress)
-        );
-
-        _feeState.spend(fee.amount);
-
-        // Decode verified report data into BasicReport struct
-        BasicReport memory report = abi.decode(
-            verifiedReportData,
-            (BasicReport)
+        VerifierLib.BasicReport memory report = verifier.verifyBasicReport(
+            signedReports
         );
 
         bool success = IOracleConsumerContract(callbackContract).consume(
@@ -165,6 +150,13 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         }
 
         _requests.fulfillRequest(id);
+
+        if (
+            FeeLib.calcFee((initGas - gasleft()) * tx.gasprice) <
+            reqStats.executionFee
+        ) {
+            revert FeeIsTooSmall(id);
+        }
     }
 
     function fallbackCall(
@@ -206,8 +198,6 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
 
         _requests.fulfillRequest(id);
 
-        _feeState.spendReward();
-
         return true;
     }
 
@@ -227,7 +217,61 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         bool executable = reqStats.status == RequestLib.RequestStatus.Pending &&
             reqStats.blockNumber + requestTimeout <= block.number;
 
-        return (id, executable, _feeState.reward());
+        return (id, executable, reqStats.executionFee);
+    }
+
+    /**
+     * @notice uses LINK's transferAndCall to LINK and add funding to an upkeep
+     * @dev safe to cast uint256 to uint96 as total LINK supply is under UINT96MAX
+     * @param sender the account which transferred the funds
+     * @param amount number of LINK transfer
+     */
+    function onTokenTransfer(
+        address sender,
+        uint256 amount,
+        uint256 id
+    ) external nonReentrant returns (bool) {
+        (bool doTransfer, uint256 reward) = onTokenTransferPreview(
+            msg.sender,
+            amount,
+            id
+        );
+
+        if (doTransfer) {
+            bool success = link.transferAndCall(
+                registry,
+                amount,
+                abi.encode(id)
+            );
+
+            if (!success) revert FailedLinkTransfer();
+
+            (bool rewardingSuccess, ) = payable(sender).call{value: reward}("");
+            return rewardingSuccess;
+        }
+        return doTransfer;
+    }
+
+    function onTokenTransferPreview(
+        address token,
+        uint256 amount,
+        uint256 id
+    ) public view returns (bool, uint256) {
+        if (token != address(link)) revert OnlyCallableByLINKToken();
+        if (!meta.approved || id != meta.id)
+            revert InvalidKeeperId(id, meta.id);
+        (, int256 linkPrice, , , ) = priceFeed.latestRoundData();
+        // swap using 0x3ec8593F930EA45ea58c968260e6e9FF53FC934f
+        uint256 reward = uint256(linkPrice) *
+            amount *
+            (FeeLib.toDec(1) + FeeLib.swapPremium());
+
+        uint256 maxReward = address(this).balance / 5;
+
+        if (address(this).balance / 5 < reward)
+            revert InvalidTransferAmount(maxReward);
+
+        return (true, reward);
     }
 
     // Utils
@@ -237,7 +281,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         bytes memory callbackArgs,
         uint256 nonce,
         address sender
-    ) public view returns (bytes32, RequestLib.RequestStats memory) {
+    ) private view returns (bytes32, RequestLib.RequestStats memory) {
         bytes32 id = RequestLib.generateId(
             callbackContract,
             callbackArgs,
@@ -250,11 +294,9 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
 
     // fallbacks
 
-    fallback() external payable {
-        handlePayment();
-    }
+    // solhint-disable-next-line no-empty-blocks
+    fallback() external payable {}
 
-    receive() external payable {
-        handlePayment();
-    }
+    // solhint-disable-next-line no-empty-blocks
+    receive() external payable {}
 }

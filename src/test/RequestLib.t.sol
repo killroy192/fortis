@@ -36,7 +36,8 @@ contract RequestsLibTest is Test {
         );
         requests.requests[id] = RequestLib.RequestStats({
             status: RequestLib.RequestStatus.Init,
-            blockNumber: 0
+            blockNumber: 0,
+            executionFee: 0
         });
     }
 
@@ -61,7 +62,8 @@ contract RequestsLibTest is Test {
             RequestLib.getRequest(requests, id),
             RequestLib.RequestStats({
                 status: RequestLib.RequestStatus.Init,
-                blockNumber: 0
+                blockNumber: 0,
+                executionFee: 0
             })
         );
     }
@@ -88,7 +90,8 @@ contract RequestsLibTest is Test {
             RequestLib.getRequest(requests, id),
             RequestLib.RequestStats({
                 status: RequestLib.RequestStatus.Pending,
-                blockNumber: 50
+                blockNumber: 50,
+                executionFee: 0
             })
         );
     }
@@ -117,7 +120,8 @@ contract RequestsLibTest is Test {
             RequestLib.getRequest(requests, id),
             RequestLib.RequestStats({
                 status: RequestLib.RequestStatus.Fulfilled,
-                blockNumber: 39
+                blockNumber: 39,
+                executionFee: 0
             })
         );
     }
