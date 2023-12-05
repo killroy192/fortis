@@ -5,7 +5,12 @@ const hre = require("hardhat");
 
 const loggedNetworks = ["arbitrum-sepolia", "arbitrum-goerli", "localhost"];
 const verifyNetwork = ["arbitrum-sepolia", "arbitrum-goerli"];
-const filePath = path.resolve("deployment-lock.json");
+const fileName =
+  hre.network.name === "localhost"
+    ? "local.deployment-lock.json"
+    : "deployment-lock.json";
+
+const filePath = path.resolve(fileName);
 
 const isLoggedNetwork = () => loggedNetworks.includes(hre.network.name);
 const isVerifyNetwork = () => verifyNetwork.includes(hre.network.name);
@@ -23,11 +28,11 @@ const updateDeploymentLockData = (result) => {
     console.log("update lock file");
     return fsp.writeFile(filePath, JSON.stringify(result));
   }
-}
+};
 
 module.exports = {
   isLoggedNetwork,
   isVerifyNetwork,
   getDeploymentLockData,
   updateDeploymentLockData,
-}
+};

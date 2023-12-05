@@ -12,7 +12,7 @@ contract FUSDC is ERC20, Ownable {
         return 6;
     }
 
-    function mint(address account, uint value) external onlyOwner {
+    function mint(address account, uint256 value) external onlyOwner {
         _mint(account, value);
     }
 }

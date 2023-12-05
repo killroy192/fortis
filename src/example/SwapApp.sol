@@ -35,8 +35,8 @@ contract SwapApp is IOracleConsumerContract {
     function trade(
         TradeParamsStruct memory tradeParams,
         uint256 nonce
-    ) external returns (bool) {
-        bool success = IOracle(oracle).addRequest(
+    ) external payable returns (bool) {
+        bool success = IOracle(oracle).addRequest{value: msg.value}(
             address(this),
             abi.encode(tradeParams),
             nonce,
@@ -51,8 +51,8 @@ contract SwapApp is IOracleConsumerContract {
     function notAutomatedTrade(
         TradeParamsStruct memory tradeParams,
         uint256 nonce
-    ) external returns (bool) {
-        bool success = IFakedOracle(oracle).addFakeRequest(
+    ) external payable returns (bool) {
+        bool success = IFakedOracle(oracle).addFakeRequest{value: msg.value}(
             address(this),
             abi.encode(tradeParams),
             nonce,

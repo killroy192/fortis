@@ -16,14 +16,20 @@ contract FakedOracle is Oracle, IFakedOracle {
         address _emmiter,
         address _verifier,
         string memory _dataStreamfeedId,
-        address _priceFeedId,
+        address _priceFeed,
+        address _linkNativeFeed,
+        address _linkToken,
+        address _registry,
         uint256 _requestTimeout
     )
         Oracle(
             _emmiter,
             _verifier,
             _dataStreamfeedId,
-            _priceFeedId,
+            _priceFeed,
+            _linkNativeFeed,
+            _linkToken,
+            _registry,
             _requestTimeout
         )
     // solhint-disable-next-line no-empty-blocks
@@ -36,7 +42,7 @@ contract FakedOracle is Oracle, IFakedOracle {
         bytes memory callbackArgs,
         uint256 nonce,
         address sender
-    ) external returns (bool) {
+    ) external payable returns (bool) {
         _addRequest(callbackContract, callbackArgs, nonce, sender);
         emit FakeAutomationTrigger(
             callbackContract,

@@ -1,4 +1,4 @@
-const { ethers } = require("hardhat");
+const hre = require("hardhat");
 const { getDeploymentLockData } = require("../../common");
 
 /**
@@ -9,11 +9,13 @@ const { getDeploymentLockData } = require("../../common");
 async function main() {
   const lock = (await getDeploymentLockData())[hre.network.name];
 
+  console.log("fund swapApp with minted usdc");
+
   const usdc = await hre.ethers.getContractAt("FUSDC", lock.FUSDC.addr);
 
-  usdc.mint(lock.SwapApp.addr, ethers.parseEther("0.0001"));
+  await usdc.mint(lock.SwapApp.addr, hre.ethers.parseEther("0.0001"));
 
-  console.log("Successfully fund swapApp with USDC");
+  console.log("done\n");
 }
 
 // We recommend this pattern to be able to use async/await everywhere

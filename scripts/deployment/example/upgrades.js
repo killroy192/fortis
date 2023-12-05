@@ -1,6 +1,6 @@
 const hre = require("hardhat");
 
-async function upgradeMockOracle(lock, linkTokenAddr) {
+async function upgradeMockOracle(lock) {
   console.log("\nrun script for upgrade FakedOracle\n");
   const FakedOracleProxyContract = await hre.ethers.getContractAt(
     "FakedOracleProxy",
@@ -12,11 +12,8 @@ async function upgradeMockOracle(lock, linkTokenAddr) {
   if (currentImplementation !== newImplementation) {
     console.log("start automatic migration");
     await FakedOracleProxyContract.upgradeTo(newImplementation);
-    const linkToken = await hre.ethers.getContractAt("IERC20", linkTokenAddr);
     console.log("done");
     // need to fund contract under router
-    console.log("fund new oracle");
-    await linkToken.transfer(newImplementation, hre.ethers.parseEther("0.1"));
     const currentImplementation =
       await FakedOracleProxyContract.implementation();
     console.log(
@@ -34,6 +31,7 @@ async function upgradeMockOracle(lock, linkTokenAddr) {
         amountIn: hre.ethers.parseEther("10"),
       },
       Math.ceil(Math.random() * 100),
+      { value: hre.ethers.parseEther("0.005") },
     );
   }
 

@@ -72,7 +72,7 @@ contract OracleRouter is
         bytes memory callbackArgs,
         uint256 nonce,
         address sender
-    ) public view returns (bytes32, bool) {
+    ) public view returns (bytes32, bool, uint256) {
         return
             IOracle(_implementation).previewFallbackCall(
                 callbackContract,
@@ -87,9 +87,9 @@ contract OracleRouter is
         bytes memory callbackArgs,
         uint256 nonce,
         address sender
-    ) external returns (bool) {
+    ) external payable returns (bool) {
         return
-            IOracle(_implementation).addRequest(
+            IOracle(_implementation).addRequest{value: msg.value}(
                 callbackContract,
                 callbackArgs,
                 nonce,
@@ -97,8 +97,26 @@ contract OracleRouter is
             );
     }
 
-    fallback() external payable {}
+    function onRegister(uint256 id) external {
+        return IOracle(_implementation).onRegister(id);
+    }
 
-    // solhint-disable-next-line no-empty-blocks
-    receive() external payable {}
+    function swap(address sender, uint256 amount) external returns (bool) {
+        return IOracle(_implementation).swap(sender, amount);
+    }
+
+    function swapPreview(uint256 amount) external view returns (bool, uint256) {
+        return IOracle(_implementation).swapPreview(amount);
+    }
+
+    // solhint-disable-next-line no-complex-fallback
+    fallback() external payable {
+        (bool sent, ) = _implementation.call{value: msg.value}(msg.data);
+        require(sent, "Failed to fallback");
+    }
+
+    receive() external payable {
+        (bool sent, ) = _implementation.call{value: msg.value}("");
+        require(sent, "Failed to fallback");
+    }
 }
