@@ -15,9 +15,8 @@ import TradeDialog from "@/components/trade-dialog";
 import { Pair } from "@/_types";
 import { useDatafeed } from "@/app/datafeed-provider";
 
-export const TradeButton = ({ pair }: { pair: Pair }) => {
+export const TradeButton = ({ pair, isFallbacked = false }: { pair: Pair, isFallbacked?: boolean }) => {
   const { isConnected } = useAccount();
-  const { prices } = useDatafeed();
 
   return (
     <Dialog>
@@ -40,11 +39,11 @@ export const TradeButton = ({ pair }: { pair: Pair }) => {
             })
           }
         >
-          Trade
+          { isFallbacked ? "Trade FB" : "Trade" }
         </Button>
       )}
       <DialogContent className="max-w-[400px] bg-[#181D29] pt-8 sm:max-w-[400px]">
-        <TradeDialog pair={pair} />
+        <TradeDialog pair={pair} isFallbacked={isFallbacked} />
       </DialogContent>
     </Dialog>
   );

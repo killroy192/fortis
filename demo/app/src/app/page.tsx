@@ -10,7 +10,6 @@ import {
 import { TradeButton } from "@/components/trade-button";
 import ExchangePrice from "@/components/exchange-price";
 import { ExchangePlatform, Pair } from "@/_types";
-import DatafeedData from "@/components/datafeed-data";
 import { isTradeEnabled } from "@/config/trade";
 import { cn } from "@/lib/utils";
 
@@ -18,10 +17,10 @@ export default function Home() {
   return (
     <div className="mb-6 mt-12 space-y-6">
       <h2 className="hidden text-[40px] font-medium leading-[52px] tracking-[-0.8px] md:block">
-        Chainlink Data Streams Demo dApp
+        Oracle fallback Demo dApp
       </h2>
       <p className="hidden font-[450] text-muted-foreground md:block">
-        Low-latency, high frequency, gas efficient data feeds on Arbitrum Goerli
+        Low-latency, high frequency, gas efficient data feeds on Arbitrum Sepolia
         Testnet.
       </p>
       <div className="rounded-md border bg-[rgb(24,29,41)]/60 p-6">
@@ -35,17 +34,14 @@ export default function Home() {
               <TableHead className="text-xl font-medium text-foreground">
                 Network
               </TableHead>
-              <TableHead className="text-xl font-medium text-foreground">
-                Answer
-              </TableHead>
-              <TableHead className="text-xl font-medium text-foreground">
-                Last Update
-              </TableHead>
               <TableHead className="w-[300px] text-xl font-medium text-foreground">
                 Cex Comparison
               </TableHead>
               {isTradeEnabled && (
                 <TableHead className="text-right text-xl font-medium text-foreground"></TableHead>
+              )}
+              {isTradeEnabled && (
+                  <TableHead className="text-right text-xl font-medium text-foreground"></TableHead>
               )}
             </TableRow>
           </TableHeader>
@@ -70,16 +66,8 @@ export default function Home() {
                     width={16}
                     height={16}
                   />
-                  <span>Arbitrum Goerli</span>
+                  <span>Arbitrum Sepolia</span>
                 </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center space-x-2">
-                  <DatafeedData data="price" pair={Pair.ETH_USD} />
-                </div>
-              </TableCell>
-              <TableCell>
-                <DatafeedData data="date" pair={Pair.ETH_USD} />
               </TableCell>
               <TableCell
                 width={210}
@@ -117,67 +105,9 @@ export default function Home() {
                   <TradeButton pair={Pair.ETH_USD} />
                 </TableCell>
               )}
-            </TableRow>
-            <TableRow className="rounded-md bg-[rgb(43,49,60)]/40">
-              <TableCell className="rounded-l-md">
-                <div className="flex items-center space-x-2">
-                  <Image src="/avax.svg" alt="arb" width={16} height={16} />
-                  <span>AVAX/USD</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center space-x-2">
-                  <Image
-                    src="/arbitrum.svg"
-                    alt="arbitrum"
-                    width={16}
-                    height={16}
-                  />
-                  <span>Arbitrum Goerli</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center space-x-2">
-                  <DatafeedData data="price" pair={Pair.AVAX_USD} />
-                </div>
-              </TableCell>
-              <TableCell>
-                <DatafeedData data="date" pair={Pair.AVAX_USD} />
-              </TableCell>
-              <TableCell
-                width={210}
-                className={cn(isTradeEnabled ? "" : "rounded-r-md")}
-              >
-                <div className="grid w-[210px] grid-cols-2 items-center gap-2">
-                  <div className="flex items-center space-x-2">
-                    <Image
-                      src="/binance.svg"
-                      alt="binance"
-                      width={16}
-                      height={16}
-                    />
-                    <ExchangePrice
-                      source={ExchangePlatform.BINANCE}
-                      pair={Pair.AVAX_USD}
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Image
-                      src="/coinbase.svg"
-                      alt="coinbase"
-                      width={16}
-                      height={16}
-                    />
-                    <ExchangePrice
-                      source={ExchangePlatform.COINBASE}
-                      pair={Pair.AVAX_USD}
-                    />
-                  </div>
-                </div>
-              </TableCell>
               {isTradeEnabled && (
                 <TableCell className="rounded-r-md text-right">
-                  <TradeButton pair={Pair.AVAX_USD} />
+                  <TradeButton pair={Pair.ETH_USD} isFallbacked={true} />
                 </TableCell>
               )}
             </TableRow>

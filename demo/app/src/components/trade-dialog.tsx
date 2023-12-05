@@ -4,12 +4,11 @@ import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
-import { Address, parseEther, parseUnits } from "viem";
+import {Address, createPublicClient, http, parseEther, parseUnits} from "viem";
 import {
   useAccount,
-  useBalance, useContractRead,
+  useBalance, useContractEvent,
   useContractWrite,
-  useSendTransaction,
 } from "wagmi";
 
 import { toast } from "@/components/ui/use-toast";
@@ -18,9 +17,7 @@ import { DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormLabel } from "@/components//ui/form";
-import { symbols } from "@/config/trade";
-import { useDatafeed } from "@/app/datafeed-provider";
-import { Pair } from "@/_types";
+import {ExchangePlatform, Pair} from "@/_types";
 import { useState } from "react";
 import {
   wethConfig,
@@ -28,21 +25,49 @@ import {
   usdcConfig, oracleConfig,
 } from "@/config/contracts";
 import { Check } from "lucide-react";
+import {arbitrumSepolia} from 'viem/chains';
+import {ethers} from "ethers";
+import {useSocket} from "@/app/socket-provider";
 
 const formSchema = z.object({
   from: z.coerce.number().gt(0),
   to: z.coerce.number(),
 });
 
-const TradeDialog = ({ pair }: { pair: Pair }) => {
+const client = createPublicClient({
+  chain: arbitrumSepolia,
+  transport: http(),
+})
+const coder = new ethers.AbiCoder();
+
+const TradeDialog = ({ pair, isFallbacked = false }: { pair: Pair, isFallbacked: boolean }) => {
   const [isLoading, setIsLoading] = useState(false);
+  let fallbackInterval: NodeJS.Timeout | undefined;
   const [txHash, setTxHash] = useState<Address | undefined>();
   const { address } = useAccount();
-  const { prices } = useDatafeed();
+  const { prices: exchangePrices } = useSocket();
   const [fWETH] = useState<Address | undefined>(wethConfig.address);
   const [fUSDC] = useState<Address | undefined>(usdcConfig.address);
   const { data: wethBalance } = useBalance({ address, token: fWETH });
   const { data: usdcBalance } = useBalance({ address, token: fUSDC });
+  const unwatchTradeExecuted = useContractEvent({
+    ...swapAppConfig,
+    eventName: "TradeExecuted",
+    listener(event) {
+      console.log(event);
+      toast({
+        title: "Swap completed:",
+        description: `Successfully exchanged WETH for USDC`,
+        variant: "success",
+      });
+      setIsLoading(false)
+        setTxHash(event[1].transactionHash);
+      unwatchTradeExecuted?.();
+      clearInterval(fallbackInterval);
+    }
+  })
+
+  const prices = exchangePrices[ExchangePlatform.COINBASE];
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -53,13 +78,6 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
   });
 
   const fromAmount = form.watch("from");
-  const { sendTransactionAsync: wrapEth } = useSendTransaction({
-    onSuccess() {
-      toast({
-        title: `Wrapped ${fromAmount} ETH`,
-      });
-    },
-  });
 
   const { writeAsync: approveWeth } = useContractWrite({
     ...wethConfig,
@@ -78,39 +96,30 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
     },
   });
 
-  const { writeAsync: approveUsdc } = useContractWrite({
-    ...usdcConfig,
-    functionName: "approve",
-    onError(error) {
-      toast({
-        variant: "destructive",
-        title: error.name,
-        description: error.message,
-      });
-    },
-    onSuccess() {
-      toast({
-        title: "Approve transaction has been sent",
-      });
-    },
-  });
 
-  const { writeAsync: trade } = useContractWrite({
-    ...swapAppConfig,
-    functionName: "trade",
-    onError(error) {
-      toast({
-        variant: "destructive",
-        title: error.name,
-        description: error.message,
-      });
-    },
-    onSuccess() {
-      toast({
-        title: "Swap in progress",
-      });
-    },
-  });
+    const { writeAsync: trade } = useContractWrite({
+      ...swapAppConfig,
+      functionName: isFallbacked ? "notAutomatedTrade" : "trade",
+      onError(error) {
+        toast({
+          variant: "destructive",
+          title: error.name,
+          description: error.message,
+        });
+      },
+      onSuccess() {
+        toast({
+          title: "Swap in progress",
+        });
+      },
+    });
+
+    const {writeAsync: fallback} = useContractWrite({
+      ...oracleConfig,
+      functionName: "fallbackCall",
+    })
+
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -123,34 +132,38 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
       });
     }
 
-    // if (fWETH == usdcConfig.address) {
-    //   await approveUsdc({
-    //     args: [swapAppConfig.address, parseEther(`${fromAmount}`)],
-    //   });
-    // }
-
     const nonce = BigInt(new Date().getTime());
     const tradeArgs = {recipient: address!,tokenIn: fWETH!,tokenOut: fUSDC!,amountIn} as const;
 
     const result = await trade({
       args: [tradeArgs, nonce],
     });
-    // const { refetch} = useContractRead({
-    //   ...oracleConfig,
-    //   functionName: "previewFallbackCall",
-    //   args: [swapAppConfig.address, tradeArgs, nonce, address] as unknown,
-    // });
-    // setInterval(async() => {
-    //   const result = await refetch();
-    //   console.log(result);
-    // }, 1000);
-    // toast({
-    //   title: "Swap completed:",
-    //   description: `${values.from} ${wethBalance?.symbol} for ${values.to} ${usdcBalance?.symbol}`,
-    //   variant: "success",
-    // });
-    setIsLoading(false);
-    setTxHash(result.hash);
+    const swapAddress: `0x${string}` = swapAppConfig.address;
+    const bytesCallbackArgs = coder.encode(
+        [
+          "tuple(address recipient, address tokenIn, address tokenOut, uint256 amountIn)",
+        ],
+        [tradeArgs],
+    );
+    fallbackInterval = setInterval(async() => {
+      console.log('fallback interval in');
+      const requestStatus = await client.readContract({
+        ...oracleConfig,
+        functionName: "previewFallbackCall",
+        args: [swapAddress, bytesCallbackArgs, nonce, address!],
+      });
+      const isFallbackCallable = (requestStatus as [string, boolean])[1];
+      if(isFallbackCallable) {
+        clearInterval(fallbackInterval);
+        const isCalled = confirm('Fallback is callable, do you want to call it?');
+        if(isCalled) {
+          const fallbackResult = await fallback({
+            args: [swapAddress, bytesCallbackArgs, nonce, address!],
+          });
+          console.log(fallbackResult, result);
+        }
+      }
+    }, 1000);
   }
 
   return txHash ? (
@@ -158,7 +171,7 @@ const TradeDialog = ({ pair }: { pair: Pair }) => {
       <Check className="rounded-full bg-[#2FB96C] p-2" width={60} height={60} />
       <h3 className="my-3 text-xl font-medium">Swap completed!</h3>
       <a
-        href={`https://goerli.arbiscan.io/tx/${txHash}`}
+        href={`https://sepolia.arbiscan.io/tx/${txHash}`}
         target="_blank"
         rel="noreferrer"
         className="mt-4 flex items-center space-x-[8px] text-base font-bold leading-4 underline hover:brightness-125"
