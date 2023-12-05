@@ -143,7 +143,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
 
         bool success = IOracleConsumerContract(callbackContract).consume(
             ForwardData({
-                price: int256(report.price),
+                price: int256(0),
                 feedType: FeedType.DataStream,
                 forwardArguments: callbackArgs
             })
@@ -156,7 +156,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         _requests.fulfillRequest(id);
 
         if (
-            FeeLib.calcFee((initGas - gasleft()) * tx.gasprice) <
+            FeeLib.calcFee((initGas - gasleft()) * tx.gasprice) >
             reqStats.executionFee
         ) {
             revert FeeIsTooSmall(id);
@@ -179,6 +179,8 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         if (!executable) {
             revert InvalidRequestsExecution(id);
         }
+
+        // TODO: decimals 8 -> 18
 
         (, int256 price, , , ) = priceFeed.latestRoundData();
 
