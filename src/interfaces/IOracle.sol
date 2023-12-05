@@ -2,8 +2,6 @@
 
 pragma solidity ^0.8.16;
 
-import {RequestLib} from "../libs/RequestLib.sol";
-
 interface IOracle {
     event SetOracleId(uint256 id);
 

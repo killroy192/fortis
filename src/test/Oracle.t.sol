@@ -4,6 +4,7 @@ pragma solidity ^0.8.16;
 
 // solhint-disable no-global-import
 // solhint-disable no-console
+// solhint-disable explicit-types
 
 import "@std/Test.sol";
 
