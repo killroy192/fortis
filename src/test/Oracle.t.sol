@@ -11,6 +11,7 @@ import "@std/Test.sol";
 import {Oracle} from "src/Oracle.sol";
 import {AutomationEmitter} from "src/AutomationEmitter.sol";
 import {IAutomationRegistry} from "src/interfaces/IAutomationRegistry.sol";
+import {IOracleConsumerContract} from "src/interfaces/IOracleCallBackContract.sol";
 
 contract MockLinkDataFeed {
     function latestRoundData()
@@ -84,6 +85,9 @@ contract OracleTest is Test {
     MockRegistry private registry = new MockRegistry();
     AutomationEmitter private emitter;
 
+    address private CALLBACK_CONTRACT = address(3);
+    address private SENDER = address(4);
+
     function setUp() public {
         emitter = new AutomationEmitter();
         oracle = new Oracle(
@@ -100,7 +104,7 @@ contract OracleTest is Test {
         payable(address(oracle)).call{value: 24 * 10 ** 15}("");
     }
 
-    function test_onRegister() public {
+    function test_OnRegister() public {
         uint id = 123456343414215;
         vm.expectEmit();
         emit SetOracleId(id);
@@ -108,57 +112,113 @@ contract OracleTest is Test {
         oracle.onRegister(id);
     }
 
-    function test_addRequest() public {
+    function test_AddRequest() public {
         vm.expectEmit();
         emit AutomationTrigger(
-            address(this),
+            CALLBACK_CONTRACT,
             abi.encodePacked("test"),
             0,
-            address(this)
+            SENDER
         );
 
         oracle.addRequest{value: 1 * 10 ** 16}(
-            address(this),
+            CALLBACK_CONTRACT,
             abi.encodePacked("test"),
             0,
-            address(this)
+            SENDER
         );
     }
 
-    function test_avoidEmitingDuplicatedRequest() public {
+    function test_RevertIfDuplicateRequest() public {
         vm.expectEmit();
 
         emit AutomationTrigger(
-            address(this),
+            CALLBACK_CONTRACT,
             abi.encodePacked("test"),
             0,
-            address(this)
+            SENDER
         );
 
         oracle.addRequest{value: 1 * 10 ** 16}(
-            address(this),
+            CALLBACK_CONTRACT,
             abi.encodePacked("test"),
             0,
-            address(this)
+            SENDER
         );
 
         vm.expectRevert();
         oracle.addRequest{value: 1 * 10 ** 16}(
-            address(this),
+            CALLBACK_CONTRACT,
             abi.encodePacked("test"),
             0,
-            address(this)
+            SENDER
         );
     }
 
-    function test_swapPreview() public {
+    function test_Fallback() public {
+        uint256 reward = 1 * 10 ** 16;
+
+        oracle.addRequest{value: reward}(
+            CALLBACK_CONTRACT,
+            abi.encodePacked("test"),
+            0,
+            SENDER
+        );
+
+        vm.roll(12);
+        vm.mockCall(
+            CALLBACK_CONTRACT,
+            abi.encodeWithSelector(IOracleConsumerContract.consume.selector),
+            abi.encode(true)
+        );
+        vm.prank(SENDER);
+
+        oracle.fallbackCall(
+            CALLBACK_CONTRACT,
+            abi.encodePacked("test"),
+            0,
+            SENDER
+        );
+
+        assertEq(SENDER.balance, reward);
+    }
+
+    function test_RevertIfTimoutHasNotPassed() public {
+        oracle.addRequest{value: 1 * 10 ** 16}(
+            CALLBACK_CONTRACT,
+            abi.encodePacked("test"),
+            0,
+            SENDER
+        );
+
+        vm.expectRevert();
+
+        oracle.fallbackCall(
+            CALLBACK_CONTRACT,
+            abi.encodePacked("test"),
+            0,
+            SENDER
+        );
+    }
+
+    function test_RevertIfNoRequestToFallback() public {
+        vm.expectRevert();
+        oracle.fallbackCall(
+            CALLBACK_CONTRACT,
+            abi.encodePacked("test"),
+            0,
+            SENDER
+        );
+    }
+
+    function test_SwapPreview() public {
         uint amount = 1 * 10 ** 18;
         (bool doTransfer, uint reward) = oracle.swapPreview(amount);
         assertEq(doTransfer, true);
         assertEq(reward, 63 * 10 ** 13);
     }
 
-    function test_swap() public {
+    function test_Swap() public {
         uint amount = 1 * 10 ** 18;
         (, uint reward) = oracle.swapPreview(amount);
         oracle.swap(address(1), amount);
