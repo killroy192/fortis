@@ -85,6 +85,9 @@ contract OracleTest is Test {
     MockRegistry private registry = new MockRegistry();
     AutomationEmitter private emitter;
 
+    address CALLBACK_CONTRACT = address(3);
+    address SENDER = address(4);
+
     function setUp() public {
         emitter = new AutomationEmitter();
         oracle = new Oracle(
@@ -101,7 +104,7 @@ contract OracleTest is Test {
         payable(address(oracle)).call{value: 24 * 10 ** 15}("");
     }
 
-    function test_onRegister() public {
+    function test_OnRegister() public {
         uint id = 123456343414215;
         vm.expectEmit();
         emit SetOracleId(id);
@@ -112,17 +115,17 @@ contract OracleTest is Test {
     function test_AddRequest() public {
         vm.expectEmit();
         emit AutomationTrigger(
-            address(this),
+            CALLBACK_CONTRACT,
             abi.encodePacked("test"),
             0,
-            address(this)
+            SENDER
         );
 
         oracle.addRequest{value: 1 * 10 ** 16}(
-            address(this),
+            CALLBACK_CONTRACT,
             abi.encodePacked("test"),
             0,
-            address(this)
+            SENDER
         );
     }
 
@@ -130,77 +133,81 @@ contract OracleTest is Test {
         vm.expectEmit();
 
         emit AutomationTrigger(
-            address(this),
+            CALLBACK_CONTRACT,
             abi.encodePacked("test"),
             0,
-            address(this)
+            SENDER
         );
 
         oracle.addRequest{value: 1 * 10 ** 16}(
-            address(this),
+            CALLBACK_CONTRACT,
             abi.encodePacked("test"),
             0,
-            address(this)
+            SENDER
         );
 
         vm.expectRevert();
         oracle.addRequest{value: 1 * 10 ** 16}(
-            address(this),
+            CALLBACK_CONTRACT,
             abi.encodePacked("test"),
             0,
-            address(this)
+            SENDER
         );
     }
 
     function test_Fallback() public {
         uint256 reward = 1 * 10 ** 16;
-        address sender = address(4);
 
         oracle.addRequest{value: reward}(
-            address(3),
+            CALLBACK_CONTRACT,
             abi.encodePacked("test"),
             0,
-            sender
+            SENDER
         );
 
         vm.roll(12);
         vm.mockCall(
-            address(3),
+            CALLBACK_CONTRACT,
             abi.encodeWithSelector(IOracleConsumerContract.consume.selector),
             abi.encode(true)
         );
-        vm.prank(sender);
+        vm.prank(SENDER);
 
-        oracle.fallbackCall(address(3), abi.encodePacked("test"), 0, sender);
+        oracle.fallbackCall(
+            CALLBACK_CONTRACT,
+            abi.encodePacked("test"),
+            0,
+            SENDER
+        );
 
-        assertEq(sender.balance, reward);
+        assertEq(SENDER.balance, reward);
     }
 
     function test_RevertIfTimoutHasNotPassed() public {
         oracle.addRequest{value: 1 * 10 ** 16}(
-            address(this),
+            CALLBACK_CONTRACT,
             abi.encodePacked("test"),
             0,
-            address(this)
+            SENDER
         );
 
         vm.expectRevert();
 
         oracle.fallbackCall(
-            address(this),
+            CALLBACK_CONTRACT,
             abi.encodePacked("test"),
             0,
-            address(this)
+            SENDER
         );
     }
 
     function test_RevertIfNoRequestToFallback() public {
         vm.expectRevert();
         oracle.fallbackCall(
-            address(this),
+            CALLBACK_CONTRACT,
             abi.encodePacked("test"),
             0,
-            address(this)
+            SENDER
         );
     }
 
