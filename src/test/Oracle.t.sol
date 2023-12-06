@@ -11,6 +11,7 @@ import "@std/Test.sol";
 import {Oracle} from "src/Oracle.sol";
 import {AutomationEmitter} from "src/AutomationEmitter.sol";
 import {IAutomationRegistry} from "src/interfaces/IAutomationRegistry.sol";
+import {IOracleConsumerContract} from "src/interfaces/IOracleCallBackContract.sol";
 
 contract MockLinkDataFeed {
     function latestRoundData()
@@ -108,7 +109,7 @@ contract OracleTest is Test {
         oracle.onRegister(id);
     }
 
-    function test_addRequest() public {
+    function test_AddRequest() public {
         vm.expectEmit();
         emit AutomationTrigger(
             address(this),
@@ -125,7 +126,7 @@ contract OracleTest is Test {
         );
     }
 
-    function test_avoidEmitingDuplicatedRequest() public {
+    function test_RevertIfDuplicateRequest() public {
         vm.expectEmit();
 
         emit AutomationTrigger(
@@ -151,14 +152,66 @@ contract OracleTest is Test {
         );
     }
 
-    function test_swapPreview() public {
+    function test_Fallback() public {
+        uint256 reward = 1 * 10 ** 16;
+        address sender = address(4);
+
+        oracle.addRequest{value: reward}(
+            address(3),
+            abi.encodePacked("test"),
+            0,
+            sender
+        );
+
+        vm.roll(12);
+        vm.mockCall(
+            address(3),
+            abi.encodeWithSelector(IOracleConsumerContract.consume.selector),
+            abi.encode(true)
+        );
+        vm.prank(sender);
+
+        oracle.fallbackCall(address(3), abi.encodePacked("test"), 0, sender);
+
+        assertEq(sender.balance, reward);
+    }
+
+    function test_RevertIfTimoutHasNotPassed() public {
+        oracle.addRequest{value: 1 * 10 ** 16}(
+            address(this),
+            abi.encodePacked("test"),
+            0,
+            address(this)
+        );
+
+        vm.expectRevert();
+
+        oracle.fallbackCall(
+            address(this),
+            abi.encodePacked("test"),
+            0,
+            address(this)
+        );
+    }
+
+    function test_RevertIfNoRequestToFallback() public {
+        vm.expectRevert();
+        oracle.fallbackCall(
+            address(this),
+            abi.encodePacked("test"),
+            0,
+            address(this)
+        );
+    }
+
+    function test_SwapPreview() public {
         uint amount = 1 * 10 ** 18;
         (bool doTransfer, uint reward) = oracle.swapPreview(amount);
         assertEq(doTransfer, true);
         assertEq(reward, 63 * 10 ** 13);
     }
 
-    function test_swap() public {
+    function test_Swap() public {
         uint amount = 1 * 10 ** 18;
         (, uint reward) = oracle.swapPreview(amount);
         oracle.swap(address(1), amount);
