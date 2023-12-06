@@ -85,8 +85,8 @@ contract OracleTest is Test {
     MockRegistry private registry = new MockRegistry();
     AutomationEmitter private emitter;
 
-    address CALLBACK_CONTRACT = address(3);
-    address SENDER = address(4);
+    address private CALLBACK_CONTRACT = address(3);
+    address private SENDER = address(4);
 
     function setUp() public {
         emitter = new AutomationEmitter();
