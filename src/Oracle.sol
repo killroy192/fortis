@@ -143,7 +143,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
 
         bool success = IOracleConsumerContract(callbackContract).consume(
             ForwardData({
-                price: int256(0),
+                price: int256(report.price),
                 feedType: FeedType.DataStream,
                 forwardArguments: callbackArgs
             })
@@ -186,7 +186,9 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
 
         bool success = IOracleConsumerContract(callbackContract).consume(
             ForwardData({
-                price: price,
+                // price convertion to 18 decimals is hardcoded for ETH\USD
+                // TODO: implement flexible conversion
+                price: price * 10 ** 10,
                 feedType: FeedType.PriceFeed,
                 forwardArguments: callbackArgs
             })
