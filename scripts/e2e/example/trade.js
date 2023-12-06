@@ -1,6 +1,5 @@
 const hre = require("hardhat");
 const { getDeploymentLockData } = require("../../common");
-const hre = require("hardhat");
 
 const { ethers, network } = hre;
 const coder = new ethers.AbiCoder();
@@ -55,18 +54,18 @@ async function main() {
     "FakedOracleProxy",
     lock.FakedOracleProxy.addr,
   );
-
-  const initBalance = await usdc.balanceOf(signerAddr);
-
-  await consumer.trade(tradeArgs, nonce, {
-    value: hre.ethers.parseEther("0.01"),
-  });
-
   const usdc = await ethers.getContractAt("FUSDC", lock.FUSDC.addr);
 
-  const balance = initBalance - await usdc.balanceOf(signerAddr);
+  console.log("USD balance before trade: ", await usdc.balanceOf(signerAddr));
 
-  console.log("Successfully traded fWETH tokens for fUSDC", balance);
+  await consumer.trade(tradeArgs, nonce, {
+    value: hre.ethers.parseEther("0.005"),
+  });
+
+  // wait ~block for automation to perform a swap
+  await new Promise((res) => setTimeout(res, 4500));
+
+  console.log("USD balance after trade: ", await usdc.balanceOf(signerAddr));
 
   console.log("run fallback check logic..");
 
