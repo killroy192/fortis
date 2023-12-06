@@ -22,8 +22,6 @@ hh-build :; npx hardhat compile
 
 test :; forge test -vvv
 
-test-e2e :; npx hardhat test
-
 snapshot :; forge snapshot
 
 slither :; slither ./src 
@@ -31,8 +29,6 @@ slither :; slither ./src
 format :; npx prettier --write src/**/*.sol
 
 lint :; npx solhint src/**/*.sol
-
-anvil :; anvil -m 'test test test test test test test test test test test junk'
 
 hh-node :; npx hardhat node
 
@@ -42,8 +38,6 @@ network?=hardhat
 
 deploy-demo :; npx hardhat run --network $(network) scripts/deployment/example/$(network)
 
-auto-demo :; npx hardhat run --network $(network) scripts/e2e/example/$(script)
-
-trade-demo :; npx hardhat run --network $(network) scripts/e2e/example/trade.js
+script-demo :; npx hardhat run --network $(network) scripts/e2e/example/$(script).js
 
 -include ${FCT_PLUGIN_PATH}/makefile-external
