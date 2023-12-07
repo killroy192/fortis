@@ -41,10 +41,10 @@ export default function RootLayout({
                 <div className="flex flex-row items-center space-x-4">
                   <Image src="/logo.svg" height={32} width={32} alt="logo" />
                   <h1 className="hidden font-medium leading-7 md:inline-block">
-                    Fortis | Demo
+                    Fortis Oracle | Demo
                   </h1>
                   <h1 className="font-medium leading-7 md:hidden">
-                    Fortis | Demo
+                    Fortis Oracle | Demo
                   </h1>
                 </div>
                 {isTradeEnabled && (
@@ -118,11 +118,11 @@ export default function RootLayout({
                         For Researchers
                       </h3>
                       <p className="text-base font-[450] text-muted-foreground">
-                        This dApp is built using Fortis Oracle. The service on
-                        top of Chainlink Data Streams and Chainlink Data Feeds.
-                        It enables developers to use easily integrate
-                        low-latency and secure data feeds in their smart
-                        contracts.
+                        This dApp is built using Fortis Oracle. Simple and
+                        powerful oracle on top of Chainlink Data Streams and
+                        Chainlink Data Feeds. It allows developers to easily
+                        integrate low-latency and secure data feeds in their
+                        smart contracts.
                       </p>
                       <a
                         href="https://github.com/killroy192/fortis-sdk"
