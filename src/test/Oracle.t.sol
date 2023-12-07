@@ -8,65 +8,14 @@ pragma solidity ^0.8.16;
 
 import "@std/Test.sol";
 
+import {LinkToken} from "@chainlink/contracts/src/v0.8/shared/token/ERC677/LinkToken.sol";
+
 import {Oracle} from "src/Oracle.sol";
 import {AutomationEmitter} from "src/AutomationEmitter.sol";
-import {IAutomationRegistry} from "src/interfaces/IAutomationRegistry.sol";
 import {IOracleConsumerContract} from "src/interfaces/IOracleCallBackContract.sol";
-
-contract MockLinkDataFeed {
-    function latestRoundData()
-        external
-        pure
-        returns (
-            uint80 roundId,
-            int256 answer,
-            uint startedAt,
-            uint updatedAt,
-            uint80 answeredInRound
-        )
-    {
-        return (0, 6 * 10 ** 14, 0, 0, 0);
-    }
-}
-
-contract MockUSDDataFeed {
-    function latestRoundData()
-        external
-        pure
-        returns (
-            uint80 roundId,
-            int256 answer,
-            uint startedAt,
-            uint updatedAt,
-            uint80 answeredInRound
-        )
-    {
-        return (0, 228173129000, 0, 0, 0);
-    }
-}
-
-contract MockLinkToken {
-    function transferFrom(address, address, uint) external returns (bool) {
-        return true;
-    }
-
-    function transferAndCall(
-        address,
-        uint,
-        bytes calldata
-    ) external returns (bool) {
-        return true;
-    }
-
-    function approve(address, uint) external returns (bool) {
-        return true;
-    }
-}
-
-contract MockRegistry is IAutomationRegistry {
-    // solhint-disable-next-line no-empty-blocks
-    function addFunds(uint256 id, uint96 amount) external {}
-}
+import {MockLinkDataFeed, MockUSDDataFeed} from "./mocks/MockDataFeeds.sol";
+import {MockRegistry} from "./mocks/MockRegistry.sol";
+import {MockVerifier} from "./mocks/MockVerifier.sol";
 
 contract OracleTest is Test {
     event AutomationTrigger(
@@ -81,18 +30,20 @@ contract OracleTest is Test {
     Oracle private oracle;
     MockLinkDataFeed private LINK_ETH_data_dfeed = new MockLinkDataFeed();
     MockUSDDataFeed private ETH_USD_data_feed = new MockUSDDataFeed();
-    MockLinkToken private linkToken = new MockLinkToken();
+    LinkToken private linkToken = new LinkToken();
     MockRegistry private registry = new MockRegistry();
-    AutomationEmitter private emitter;
+    MockVerifier private verifier = new MockVerifier();
+    AutomationEmitter private emitter = new AutomationEmitter();
+    uint private paymentForExecution = 1 * 10 ** 16;
+    uint private linkHoldings;
 
     address private CALLBACK_CONTRACT = address(3);
     address private SENDER = address(4);
 
     function setUp() public {
-        emitter = new AutomationEmitter();
         oracle = new Oracle(
             address(emitter),
-            address(0),
+            address(verifier),
             "test",
             address(ETH_USD_data_feed),
             address(LINK_ETH_data_dfeed),
@@ -102,6 +53,9 @@ contract OracleTest is Test {
         );
 
         payable(address(oracle)).call{value: 24 * 10 ** 15}("");
+
+        linkToken.grantMintAndBurnRoles(address(this));
+        linkHoldings = 1 * 10 ** linkToken.decimals();
     }
 
     function test_OnRegister() public {
@@ -129,7 +83,7 @@ contract OracleTest is Test {
         );
     }
 
-    function test_RevertIfDuplicateRequest() public {
+    function test_AddRequestRevertIfDuplicateRequest() public {
         vm.expectEmit();
 
         emit AutomationTrigger(
@@ -139,7 +93,7 @@ contract OracleTest is Test {
             SENDER
         );
 
-        oracle.addRequest{value: 1 * 10 ** 16}(
+        oracle.addRequest{value: paymentForExecution}(
             CALLBACK_CONTRACT,
             abi.encodePacked("test"),
             0,
@@ -147,7 +101,7 @@ contract OracleTest is Test {
         );
 
         vm.expectRevert();
-        oracle.addRequest{value: 1 * 10 ** 16}(
+        oracle.addRequest{value: paymentForExecution}(
             CALLBACK_CONTRACT,
             abi.encodePacked("test"),
             0,
@@ -155,10 +109,97 @@ contract OracleTest is Test {
         );
     }
 
-    function test_Fallback() public {
-        uint256 reward = 1 * 10 ** 16;
+    function test_PreviewFallbackCallIfTimoutHasNotPassed() public {
+        oracle.addRequest{value: paymentForExecution}(
+            CALLBACK_CONTRACT,
+            abi.encodePacked("test"),
+            0,
+            SENDER
+        );
 
-        oracle.addRequest{value: reward}(
+        (, bool executable, uint executionFee) = oracle.previewFallbackCall(
+            CALLBACK_CONTRACT,
+            abi.encodePacked("test"),
+            0,
+            SENDER
+        );
+
+        assertEq(executable, false);
+        assertEq(executionFee, paymentForExecution);
+    }
+
+    function test_PreviewFallbackCall() public {
+        oracle.addRequest{value: paymentForExecution}(
+            CALLBACK_CONTRACT,
+            abi.encodePacked("test"),
+            0,
+            SENDER
+        );
+
+        vm.roll(12);
+
+        (, bool executable, ) = oracle.previewFallbackCall(
+            CALLBACK_CONTRACT,
+            abi.encodePacked("test"),
+            0,
+            SENDER
+        );
+
+        assertEq(executable, true);
+    }
+
+    function test_PerformUpkeep() public {
+        oracle.addRequest{value: paymentForExecution}(
+            CALLBACK_CONTRACT,
+            abi.encodePacked("test"),
+            0,
+            SENDER
+        );
+
+        vm.roll(12);
+        vm.mockCall(
+            CALLBACK_CONTRACT,
+            abi.encodeWithSelector(IOracleConsumerContract.consume.selector),
+            abi.encode(true)
+        );
+
+        bytes32[3] memory reportContextData = [
+            bytes32(""),
+            bytes32(""),
+            bytes32("")
+        ];
+        bytes memory reportData = bytes("");
+        bytes[] memory signedReports = new bytes[](1);
+        signedReports[0] = (abi.encode(reportContextData, reportData));
+        bytes memory extraData = abi.encode(
+            CALLBACK_CONTRACT,
+            abi.encodePacked("test"),
+            0,
+            SENDER
+        );
+
+        bytes memory performData = abi.encode(signedReports, extraData);
+
+        vm.mockCall(
+            CALLBACK_CONTRACT,
+            abi.encodeWithSelector(IOracleConsumerContract.consume.selector),
+            abi.encode(true)
+        );
+
+        oracle.performUpkeep(performData);
+
+        (, bool executable, ) = oracle.previewFallbackCall(
+            CALLBACK_CONTRACT,
+            abi.encodePacked("test"),
+            0,
+            SENDER
+        );
+
+        assertEq(executable, false);
+    }
+
+    function test_Fallback() public {
+        oracle.addRequest{value: paymentForExecution}(
             CALLBACK_CONTRACT,
             abi.encodePacked("test"),
             0,
@@ -180,11 +221,11 @@ contract OracleTest is Test {
             SENDER
         );
 
-        assertEq(SENDER.balance, reward);
+        assertEq(SENDER.balance, paymentForExecution);
     }
 
-    function test_RevertIfTimoutHasNotPassed() public {
-        oracle.addRequest{value: 1 * 10 ** 16}(
+    function test_FallbackRevertIfTimoutHasNotPassed() public {
+        oracle.addRequest{value: paymentForExecution}(
             CALLBACK_CONTRACT,
             abi.encodePacked("test"),
             0,
@@ -201,7 +242,7 @@ contract OracleTest is Test {
         );
     }
 
-    function test_RevertIfNoRequestToFallback() public {
+    function test_FallbackRevertIfNoRequest() public {
         vm.expectRevert();
         oracle.fallbackCall(
             CALLBACK_CONTRACT,
@@ -212,16 +253,17 @@ contract OracleTest is Test {
     }
 
     function test_SwapPreview() public {
-        uint amount = 1 * 10 ** 18;
-        (bool doTransfer, uint reward) = oracle.swapPreview(amount);
+        (bool doTransfer, uint reward) = oracle.swapPreview(linkHoldings);
         assertEq(doTransfer, true);
         assertEq(reward, 63 * 10 ** 13);
     }
 
     function test_Swap() public {
-        uint amount = 1 * 10 ** 18;
-        (, uint reward) = oracle.swapPreview(amount);
-        oracle.swap(address(1), amount);
-        assertEq(address(1).balance, reward);
+        linkToken.mint(SENDER, linkHoldings);
+        vm.prank(SENDER);
+        linkToken.approve(address(oracle), linkHoldings);
+        (, uint reward) = oracle.swapPreview(linkHoldings);
+        oracle.swap(SENDER, linkHoldings);
+        assertEq(SENDER.balance, reward);
     }
 }

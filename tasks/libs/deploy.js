@@ -1,9 +1,13 @@
-const hre = require("hardhat");
 const {
   isVerifyNetwork,
   getDeploymentLockData,
   updateDeploymentLockData,
-} = require("../common");
+} = require("./common");
+
+/**
+ * Deployment script.
+ * Consumes deployment config and deploy only changed contracts.
+ */
 
 const getLibrariesDynamically = (deploymentLock, config = {}) =>
   Object.entries(config).reduce((acc, [libName, getter]) => {
@@ -20,9 +24,14 @@ const getLibrariesDynamically = (deploymentLock, config = {}) =>
   }, {});
 
 const deployOnlyChanged =
-  (deploymentConfig) =>
+  (deploymentConfig, hre) =>
   async (deploymentLock = {}) => {
-    const { contract, deployerOptions = {}, args = [], skipVerify } = deploymentConfig;
+    const {
+      contract,
+      deployerOptions = {},
+      args = [],
+      skipVerify,
+    } = deploymentConfig;
 
     console.log("prepare deployment libraries");
 
@@ -69,7 +78,7 @@ const deployOnlyChanged =
 
     console.log("Contract deployed, address:", contractAddress);
 
-    if (isVerifyNetwork() && !skipVerify) {
+    if (isVerifyNetwork(hre) && !skipVerify) {
       console.log("verify newly deployed contract...");
 
       await hre.run("verify:verify", {
@@ -90,14 +99,14 @@ const deployOnlyChanged =
     };
   };
 
-module.exports = async function main(config) {
+module.exports = async function main(config, hre) {
   try {
     const networkName = hre.network.name;
 
-    const currentDeploymentLock = await getDeploymentLockData();
+    const currentDeploymentLock = await getDeploymentLockData(hre);
 
     const deploymentResult = await config.reduce(
-      (acc, c) => acc.then(deployOnlyChanged(c)),
+      (acc, c) => acc.then(deployOnlyChanged(c, hre)),
       Promise.resolve(currentDeploymentLock[networkName]),
     );
 
@@ -108,7 +117,7 @@ module.exports = async function main(config) {
       [networkName]: deploymentResult,
     };
 
-    await updateDeploymentLockData(result);
+    await updateDeploymentLockData(result, hre);
 
     console.log("Done");
     return deploymentResult;

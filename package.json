@@ -1,7 +1,7 @@
 {
-  "name": "fortis-sdk",
+  "name": "fortis-oracle",
   "version": "0.0.1",
-  "description": "SDK for Data Stream ChainLink Oracle backed by Data Feeds",
+  "description": "Simple and powerful oracle on top of Chainlink Data Streams and Chainlink Data Feeds",
   "author": "Patrick Collins",
   "license": "MIT",
   "files": [

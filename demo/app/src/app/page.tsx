@@ -17,7 +17,7 @@ export default function Home() {
   return (
     <div className="mb-6 mt-12 space-y-6">
       <h2 className="hidden text-[40px] font-medium leading-[52px] tracking-[-0.8px] md:block">
-        Oracle fallback Demo dApp
+        Fortis Demo | Secure Oracle as a service
       </h2>
       <p className="hidden font-[450] text-muted-foreground md:block">
         Low-latency, high frequency, gas efficient data feeds on Arbitrum Sepolia
@@ -35,7 +35,7 @@ export default function Home() {
                 Network
               </TableHead>
               <TableHead className="w-[300px] text-xl font-medium text-foreground">
-                Cex Comparison
+                Cex Prices
               </TableHead>
               {isTradeEnabled && (
                 <TableHead className="text-right text-xl font-medium text-foreground"></TableHead>
@@ -101,12 +101,8 @@ export default function Home() {
                 </div>
               </TableCell>
               {isTradeEnabled && (
-                <TableCell className="rounded-r-md text-right">
+                <TableCell className="flex justify-around">
                   <TradeButton pair={Pair.ETH_USD} />
-                </TableCell>
-              )}
-              {isTradeEnabled && (
-                <TableCell className="rounded-r-md text-right">
                   <TradeButton pair={Pair.ETH_USD} isFallbacked={true} />
                 </TableCell>
               )}

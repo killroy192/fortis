@@ -4,6 +4,8 @@ pragma solidity ^0.8.16;
 import {Log} from "@chainlink/contracts/src/v0.8/automation/interfaces/ILogAutomation.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {LinkTokenInterface} from "@chainlink/contracts/src/v0.8/shared/interfaces/LinkTokenInterface.sol";
+// solhint-disable-next-line max-line-length
+import {IAutomationRegistryConsumer} from "@chainlink/contracts/src/v0.8/automation/interfaces/IAutomationRegistryConsumer.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -11,7 +13,7 @@ import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
 import {IOracle} from "./interfaces/IOracle.sol";
 import {IOracleConsumerContract, ForwardData, FeedType} from "./interfaces/IOracleCallBackContract.sol";
 import {IAutomationEmitter} from "./interfaces/IAutomationEmitter.sol";
-import {IAutomationRegistry} from "./interfaces/IAutomationRegistry.sol";
+import {BasicReport} from "./interfaces/BasicReport.sol";
 
 import {RequestLib} from "./libs/RequestLib.sol";
 import {FeeLib} from "./libs/FeeLib.sol";
@@ -137,9 +139,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
             revert InvalidRequestsExecution(id);
         }
 
-        VerifierLib.BasicReport memory report = verifier.verifyBasicReport(
-            signedReports
-        );
+        BasicReport memory report = verifier.verifyBasicReport(signedReports);
 
         bool success = IOracleConsumerContract(callbackContract).consume(
             ForwardData({
@@ -244,7 +244,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
 
             link.approve(registry, amount);
 
-            IAutomationRegistry(registry).addFunds(
+            IAutomationRegistryConsumer(registry).addFunds(
                 meta.id,
                 SafeCast.toUint96(amount)
             );

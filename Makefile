@@ -22,8 +22,6 @@ hh-build :; npx hardhat compile
 
 test :; forge test -vvv
 
-test-e2e :; npx hardhat test
-
 snapshot :; forge snapshot
 
 slither :; slither ./src 
@@ -32,18 +30,27 @@ format :; npx prettier --write src/**/*.sol
 
 lint :; npx solhint src/**/*.sol
 
-anvil :; anvil -m 'test test test test test test test test test test test junk'
-
 hh-node :; npx hardhat node
 
 abi :; npx hardhat export-abi
 
 network?=hardhat
 
-deploy-demo :; npx hardhat run --network $(network) scripts/deployment/example/$(network)
+deploy-demo :; npx hardhat --network $(network) deploy:demo
 
-auto-demo :; npx hardhat run --network $(network) scripts/e2e/example/$(script)
+amount?=1
+oracle?=Oracle
 
-trade-demo :; npx hardhat run --network $(network) scripts/e2e/example/trade.js
+refund :; npx hardhat --network $(network) refund --amount $(amount) --oracle $(oracle)
+
+refund-demo :; npx hardhat --network $(network) refund --amount $(amount) --oracle FakedOracle
+
+onRegister :; npx hardhat --network $(network) refund --id $(id) --oracle $(oracle)
+
+onRegister-demo :; npx hardhat --network $(network) refund --id $(id) --oracle FakedOracle
+
+eth?=0.001
+
+trade-demo :;  npx hardhat --network $(network) trade:demo --amount $(eth)
 
 -include ${FCT_PLUGIN_PATH}/makefile-external

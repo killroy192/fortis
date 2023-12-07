@@ -2,7 +2,9 @@
 
 pragma solidity ^0.8.16;
 
-interface IFakedOracle {
+import {IOracle} from "src/interfaces/IOracle.sol";
+
+interface IFakedOracle is IOracle {
     function addFakeRequest(
         address callbackContract,
         bytes memory callbackArgs,
