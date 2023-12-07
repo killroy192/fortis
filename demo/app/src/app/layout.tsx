@@ -118,11 +118,10 @@ export default function RootLayout({
                         For Researchers
                       </h3>
                       <p className="text-base font-[450] text-muted-foreground">
-                        This dApp is built using Fortis Oracle. Simple and
-                        powerful oracle on top of Chainlink Data Streams and
-                        Chainlink Data Feeds. It allows developers to easily
-                        integrate low-latency and secure data feeds in their
-                        smart contracts.
+                        This dApp is built using Fortis Oracle. Oracle lavages
+                        Chainlink infrastructure (Data Streams and Data Feeds)
+                        and provides simple and useful interface to integrate
+                        any dApp with it.
                       </p>
                       <a
                         href="https://github.com/killroy192/fortis-sdk"

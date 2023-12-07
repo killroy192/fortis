@@ -50,15 +50,6 @@ module.exports = {
         externals: DEFAULT_EXTERNALS,
       },
     },
-    sepolia: {
-      url: config?.parsed?.SEPOLIA_RPC_URL || DEFAULT_RPC,
-      accounts: deployerAccounts,
-      deployment: {
-        logFile: "deployment-lock.json",
-        verify: true,
-        externals: DEFAULT_EXTERNALS,
-      },
-    },
     "arbitrum-sepolia": {
       url: config?.parsed?.ARBITRUM_SEPOLIA_RPC || DEFAULT_RPC,
       accounts: deployerAccounts,
@@ -75,21 +66,11 @@ module.exports = {
           registry: "0x8194399b3f11fca2e8ccefc4c9a658c61b8bf412",
         },
       },
-    },
-    "arbitrum-goerli": {
-      url: config?.parsed?.ARBITRUM_GOERLI_RPC || DEFAULT_RPC,
-      accounts: deployerAccounts,
-      deployment: {
-        logFile: "deployment-lock.json",
-        verify: true,
-        externals: DEFAULT_EXTERNALS,
-      },
-    },
+    }
   },
   etherscan: {
     apiKey: {
       "arbitrum-sepolia": config?.parsed?.ABISCAN_API_KEY,
-      "arbitrum-goerli": config?.parsed?.ABISCAN_API_KEY,
     },
     customChains: [
       {
@@ -99,15 +80,7 @@ module.exports = {
           apiURL: "https://api-sepolia.arbiscan.io/api",
           browserURL: "https://sepolia-explorer.arbitrum.io",
         },
-      },
-      {
-        network: "arbitrum-goerli",
-        chainId: 421613,
-        urls: {
-          apiURL: "https://api-goerli.arbiscan.io/api",
-          browserURL: "https://goerli.arbiscan.io/",
-        },
-      },
+      }
     ],
   },
 };
