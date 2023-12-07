@@ -36,18 +36,18 @@ abi :; npx hardhat export-abi
 
 network?=hardhat
 
-deploy-demo :; npx hardhat run --network $(network) deploy:demo
+deploy-demo :; npx hardhat --network $(network) deploy:demo
 
 amount?=1
 oracle?=Oracle
 
-refund :; npx hardhat run --network $(network) refund --amount $(amount) --oracle $(oracle)
+refund :; npx hardhat --network $(network) refund --amount $(amount) --oracle $(oracle)
 
-refund-demo :; npx hardhat run --network $(network) refund --amount $(amount) --oracle FakedOracle
+refund-demo :; npx hardhat --network $(network) refund --amount $(amount) --oracle FakedOracle
 
-onRegister :; npx hardhat run --network $(network) refund --id $(id) --oracle $(oracle)
+onRegister :; npx hardhat --network $(network) refund --id $(id) --oracle $(oracle)
 
-onRegister-demo :; npx hardhat run --network $(network) refund --id $(id) --oracle FakedOracle
+onRegister-demo :; npx hardhat --network $(network) refund --id $(id) --oracle FakedOracle
 
 eth?=0.001
 
