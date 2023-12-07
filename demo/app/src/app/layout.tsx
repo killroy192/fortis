@@ -118,9 +118,9 @@ export default function RootLayout({
                         For Researchers
                       </h3>
                       <p className="text-base font-[450] text-muted-foreground">
-                        This dApp is built using Fortis Oracle. Oracle lavages
+                        This dApp is built using Fortis Oracle. Oracle leverages
                         Chainlink infrastructure (Data Streams and Data Feeds)
-                        and provides simple and useful interface to integrate
+                        and provides simple and useful Oracle to integrate
                         any dApp with it.
                       </p>
                       <a
