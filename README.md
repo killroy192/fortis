@@ -15,11 +15,16 @@
 
 ## About
 
-TBD Introduction
+Fortis Oracle leverages Chainlink infrastructure (Data Streams and Data Feeds) and provides simple and useful Oracle for next-level high-performant dApps.
 
 ### Features
 
-TBD Features description
+- Request processing guarantee.
+In case Chainlink Data Stream fails to deliver data within a predefined period of time, anyone can call a fallback method and deliver data collected from Chainlink Data Feeds. Keep the fallback method open, allows smooth and simple integration with AA tools.
+- Simple and straightforward Oracle integration with dApps. 
+While Chainlink provides highly customizable low-level API to build custom dApp oracles, Fortis Oracle focuses on reusability and simplicity, while preserving the benefits of Chainlink. To interact with Fortis Oracle, dApp should call the `AddRequest` method and implement the `Consume` method that will be called once price data is available.
+- Processing Fee simplification.
+Fortis Oracle charges a fee per request in ETH. The fee can be set by dApp based on total gas usage. It removes the necessity to deal with LINK\ETH conversion on the dApp level. Fortis Oracle uses an arbitrage-based approach to automatically convert collected ETH into LINK tokens and fund itself.
 
 ### Architecture
 
