@@ -99,7 +99,7 @@ async function trade(toSell, hre) {
   console.log("done\n");
 }
 
-task("trade:demo", "Execute ETH\\USD trade")
+task("demo:trade", "Execute ETH\\USD trade on SwapApp")
   .addParam("amount", "link to swap for eth", "0.01")
   .setAction(async (args, hre) =>
     trade(args.amount, hre).catch((error) => {
