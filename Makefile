@@ -36,8 +36,21 @@ abi :; npx hardhat export-abi
 
 network?=hardhat
 
-deploy-demo :; npx hardhat run --network $(network) scripts/deployment/example/$(network)
+deploy-demo :; npx hardhat --network $(network) deploy:demo
 
-script-demo :; npx hardhat run --network $(network) scripts/e2e/example/$(script).js
+amount?=1
+oracle?=Oracle
+
+refund :; npx hardhat --network $(network) refund --amount $(amount) --oracle $(oracle)
+
+refund-demo :; npx hardhat --network $(network) refund --amount $(amount) --oracle FakedOracle
+
+onRegister :; npx hardhat --network $(network) refund --id $(id) --oracle $(oracle)
+
+onRegister-demo :; npx hardhat --network $(network) refund --id $(id) --oracle FakedOracle
+
+eth?=0.001
+
+trade-demo :;  npx hardhat --network $(network) trade:demo --amount $(eth)
 
 -include ${FCT_PLUGIN_PATH}/makefile-external
