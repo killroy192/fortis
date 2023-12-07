@@ -1,23 +1,17 @@
 const fsp = require("node:fs/promises");
 const fs = require("node:fs");
 const path = require("node:path");
-const {
-  loggedNetworks,
-  verifyNetwork,
-  localDeploymentFileName,
-  deploymentFileName,
-} = require("../config.global");
 
 const getFilePath = (hre) => {
-  const fileName =
-    hre.network.name === "localhost"
-      ? localDeploymentFileName
-      : deploymentFileName;
-  return path.resolve(fileName);
+  return path.resolve(
+    hre.userConfig.networks[hre.network.name]?.deploy?.logFile || "",
+  );
 };
 
-const isLoggedNetwork = (hre) => loggedNetworks.includes(hre.network.name);
-const isVerifyNetwork = (hre) => verifyNetwork.includes(hre.network.name);
+const isLoggedNetwork = (hre) =>
+  hre.userConfig.networks[hre.network.name]?.deploy?.logFile;
+const isVerifyNetwork = (hre) =>
+  hre.userConfig.networks[hre.network.name]?.deploy?.verify;
 
 const getDeploymentLockData = async (hre) => {
   const filePath = getFilePath(hre);

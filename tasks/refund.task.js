@@ -1,5 +1,4 @@
 const { getDeploymentLockData } = require("./libs/common");
-const { externals } = require("./config.global");
 
 /**
  * Simple script to run onRegister in to safely set keeper id
@@ -18,10 +17,10 @@ async function refund(oracleContractName, linkToSpend, hre) {
 
   const linkToken = await hre.ethers.getContractAt(
     "LinkTokenInterface",
-    externals[hre.network.name].linkToken,
+    hre.userConfig.networks[hre.network.name].deployment.externals.linkToken,
   );
 
-  const amount = hre.ethers.parseUnits(linkToSpend, (await linkToken.decimals()));
+  const amount = hre.ethers.parseUnits(linkToSpend, await linkToken.decimals());
 
   const resp = await oracle.swapPreview(amount);
   console.log("swapPreview", resp);

@@ -1,7 +1,6 @@
 const deploy = require("../libs/deploy");
-const { externals } = require("../config.global");
 
-const config = (externalDeps) => [
+const config = (externals) => [
   {
     contract: "AutomationEmitter",
   },
@@ -20,17 +19,17 @@ const config = (externalDeps) => [
       // emitter
       (deploymentLock) => deploymentLock.AutomationEmitter.addr,
       // verifier
-      externalDeps.verifier,
+      externals.verifier,
       // eth/usd data stream id
-      externalDeps.streamId,
+      externals.streamId,
       // eth/usd data feed
-      externalDeps.datafeed,
+      externals.datafeed,
       // link/eth data feed
-      externalDeps.linkNativeFeed,
+      externals.linkNativeFeed,
       // link token
-      externalDeps.linkToken,
+      externals.linkToken,
       // registry
-      externalDeps.registry,
+      externals.registry,
       // timeout
       3,
     ],
@@ -83,11 +82,10 @@ const upgradeMockOracle = (hre) => async (lock) => {
   console.log("\ndone\n");
 };
 
-task("deploy:demo", "Deploy and upgrade demo contracts").setAction(
-  async (args, hre) => {
-    const externalsNetwork =
-      hre.network.name === "hardhat" ? "localhost" : hre.network.name;
-    return deploy(config(externals[externalsNetwork]), hre)
+task("demo:deploy", "Deploy and upgrade demo-related contracts").setAction(
+  async (_, hre) => {
+    const { externals } = hre.userConfig.networks[hre.network.name].deployment;
+    return deploy(config(externals), hre)
       .then(upgradeMockOracle(hre))
       .catch((error) => {
         console.error(error);
