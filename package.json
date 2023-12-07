@@ -1,8 +1,8 @@
 {
   "name": "fortis-oracle",
   "version": "0.0.1",
-  "description": "Simple and powerful oracle on top of Chainlink Data Streams and Chainlink Data Feeds",
-  "author": "Patrick Collins",
+  "description": "Easy to integrate and powerful Oracle on top of Chainlink Data Streams and Chainlink Data Feeds.",
+  "author": "Dzmitry Lahunouski, Dzianis Roi, Tikhon Scherbakov",
   "license": "MIT",
   "files": [
     "src/**/*.sol"
@@ -45,7 +45,6 @@
     "hardhat-gas-reporter": "^1.0.8",
     "husky": "^8.0.3",
     "lint-staged": "^15.1.0",
-    "npm-run-all": "^4.1.5",
     "prettier": "^3.1.0",
     "prettier-plugin-solidity": "^1.2.0",
     "solhint": "^4.0.0",

@@ -1,169 +1,119 @@
-*Note: This repo has been recently updated for Sepolia*
+# Fortis Oracle
 
-# Foundry Starter Kit
-
-<br/>
-<p align="center">
-<a href="https://chain.link" target="_blank">
-<img src="./img/chainlink-foundry.png" width="225" alt="Chainlink Foundry logo">
-</a>
-</p>
-<br/>
-
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/smartcontractkit/foundry-starter-kit)
-
-Foundry Starter Kit is a repo that shows developers how to quickly build, test, and deploy smart contracts with one of the fastest frameworks out there, [foundry](https://github.com/gakonst/foundry)!
-
-
-- [Foundry Starter Kit](#foundry-starter-kit)
-- [Getting Started](#getting-started)
+- [About](#about)
+  - [Features](#features)
+  - [Architecture](#architecture)
+- [Development](#development)
   - [Requirements](#requirements)
   - [Quickstart](#quickstart)
   - [Testing](#testing)
-- [Deploying to a network](#deploying-to-a-network)
-  - [Setup](#setup)
   - [Deploying](#deploying)
-    - [Working with a local network](#working-with-a-local-network)
-    - [Working with other chains](#working-with-other-chains)
-- [Security](#security)
+  - [Deploying](#deploying)
+  - [Deploying](#deploying)
 - [Contributing](#contributing)
-- [Thank You!](#thank-you)
-  - [Resources](#resources)
-    - [TODO](#todo)
+- [Resources](#resources)
 
-# Getting Started
+## About
 
-## Requirements
+Fortis Oracle leverages Chainlink infrastructure (Data Streams and Data Feeds) and provides simple and useful Oracle for next-level high-performant dApps.
 
-Please install the following:
+### Features
 
--   [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)  
+- Request processing guarantee.
+In case Chainlink Data Stream fails to deliver data within a predefined period of time, anyone can call a fallback method and deliver data collected from Chainlink Data Feeds. Keep the fallback method open, allows smooth and simple integration with AA tools.
+- Simple and straightforward Oracle integration with dApps. 
+While Chainlink provides highly customizable low-level API to build custom dApp oracles, Fortis Oracle focuses on reusability and simplicity, while preserving the benefits of Chainlink. To interact with Fortis Oracle, dApp should call the `AddRequest` method and implement the `Consume` method that will be called once price data is available.
+- Processing Fee simplification.
+Fortis Oracle charges a fee per request in ETH. The fee can be set by dApp based on total gas usage. It removes the necessity to deal with LINK\ETH conversion on the dApp level. Fortis Oracle uses an arbitrage-based approach to automatically convert collected ETH into LINK tokens and fund itself.
+
+### Architecture
+
+TBD Architecture description
+
+## Development
+
+### Requirements
+
+-[Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)  
     -   You'll know you've done it right if you can run `git --version`
--   [Foundry / Foundryup](https://github.com/gakonst/foundry)
+-[Foundry / Foundryup](https://github.com/gakonst/foundry)
     -   This will install `forge`, `cast`, and `anvil`
     -   You can test you've installed them right by running `forge --version` and get an output like: `forge 0.2.0 (f016135 2022-07-04T00:15:02.930499Z)`
     -   To get the latest of each, just run `foundryup`
+-[Node.js](https://nodejs.org/en)
+-Optional. [Docker](https://www.docker.com/)
+    - You'll need to run docker if you want to use dev container and safely play with smartcontracts & scripts
 
-And you probably already have `make` installed... but if not [try looking here.](https://askubuntu.com/questions/161104/how-do-i-install-make)
-
-## Quickstart
+### Quickstart
 
 ```sh
-git clone https://github.com/smartcontractkit/foundry-starter-kit
-cd foundry-starter-kit
+git clone git@github.com:killroy192/fortis.git
+cd fortis
+cp .env.example .env
 make # This installs the project's dependencies.
+```
+
+### Testing
+
+```sh
 make test
 ```
 
-## Testing
+### Deploying
 
-```
-make test
-```
+Deploying to a network uses the [hardhat](https://hardhat.org/) custom tasks. Currently project supports deployment to hardhat (deploy-and-kill) network, hardhat localhost and arbitrum-sepolia.
+To deploy fortis oracle  run:
 
-or
-
-```
-forge test
+```sh
+make deploy network=arbitrum-sepolia
 ```
 
-# Deploying to a network
+To deploy fortis oracle along with demo contracts, run:
 
-Deploying to a network uses the [foundry scripting system](https://book.getfoundry.sh/tutorials/solidity-scripting.html), where you write your deploy scripts in solidity!
-
-## Setup
-
-We'll demo using the Sepolia testnet. (Go here for [testnet sepolia ETH](https://faucets.chain.link/).)
-
-You'll need to add the following variables to a `.env` file:
-
--   `SEPOLIA_RPC_URL`: A URL to connect to the blockchain. You can get one for free from [Infura](https://www.infura.io/) account
--   `PRIVATE_KEY`: A private key from your wallet. You can get a private key from a new [Metamask](https://metamask.io/) account
-    -   Additionally, if you want to deploy to a testnet, you'll need test ETH and/or LINK. You can get them from [faucets.chain.link](https://faucets.chain.link/).
--   Optional `ETHERSCAN_API_KEY`: If you want to verify on etherscan
-
-## Deploying
-
-```
-make deploy-sepolia contract=<CONTRACT_NAME>
+```sh
+make deploy-demo network=arbitrum-sepolia
 ```
 
-For example:
+The script will run and deploy only changed contracts. In case you need a fresh deployment, please remove `deployment.lock` file.
+In case of new Oracle deployment, you will need to register it with [Chainlink automation log trigger](https://docs.chain.link/chainlink-automation/overview/getting-started#try-out-chainlink-automation).
+After successful registration, you'll need to set Upkeep ID running:
 
-```
-make deploy-sepolia contract=PriceFeedConsumer
-```
-
-This will run the forge script, the script it's running is:
-
-```
-@forge script script/${contract}.s.sol:Deploy${contract} --rpc-url ${SEPOLIA_RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast --verify --etherscan-api-key ${ETHERSCAN_API_KEY}  -vvvv
-```
-
-If you don't have an `ETHERSCAN_API_KEY`, you can also just run:
-
-```
-@forge script script/${contract}.s.sol:Deploy${contract} --rpc-url ${SEPOLIA_RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast 
+```sh
+# Oracle without demo modules
+make onRegister network=arbitrum-sepolia id={your_upkeep_id} oracle=Oracle
+# Oracle for demo 
+make onRegister-demo network=arbitrum-sepolia id={your_upkeep_id}
 ```
 
-These pull from the files in the `script` folder. 
+### Useful commands
 
-### Working with a local network
+To fund oracle with LINK tokens in exchange for collected ETH, run:
 
-Foundry comes with local network [anvil](https://book.getfoundry.sh/anvil/index.html) baked in, and allows us to deploy to our local network for quick testing locally. 
-
-To start a local network run:
-
-```
-make anvil
-```
-
-This will spin up a local blockchain with a determined private key, so you can use the same private key each time. 
-
-Then, you can deploy to it with:
-
-```
-make deploy-anvil contract=<CONTRACT_NAME>
+```sh
+# Oracle without demo modules
+make refund network=arbitrum-sepolia amount={link_tokens} oracle=Oracle
+# Oracle for demo 
+make refund-demo network=arbitrum-sepolia amount={link_tokens}
 ```
 
-Similar to `deploy-sepolia`
+To trade ETH\fUSDC with [SwapAPP](https://github.com/killroy192/fortis/blob/main/src/example/SwapApp.sol), run:
 
-### Working with other chains
-
-To add a chain, you'd just need to make a new entry in the `Makefile`, and replace `<YOUR_CHAIN>` with whatever your chain's information is. 
-
-```
-deploy-<YOUR_CHAIN> :; @forge script script/${contract}.s.sol:Deploy${contract} --rpc-url ${<YOUR_CHAIN>_RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast -vvvv
-
+```sh
+make trade-demo network=arbitrum-sepolia amount={eth_to_trade}
 ```
 
-# Security
+*note:* SwappApp charges fixed 0.001 ETH fee for trade , modify `trade.task.js` if needed.
 
-This framework comes with slither parameters, a popular security framework from [Trail of Bits](https://www.trailofbits.com/). To use slither, you'll first need to [install python](https://www.python.org/downloads/) and [install slither](https://github.com/crytic/slither#how-to-install).
-
-Then, you can run:
-
-```
-make slither
-```
-
-And get your slither output. 
-
-
-
-# Contributing
+## Contributing
 
 Contributions are always welcome! Open a PR or an issue!
 
-# Thank You!
+Please install the following:
+
+And you probably already have `make` installed... but if not [try looking here.](https://askubuntu.com/questions/161104/how-do-i-install-make)
 
 ## Resources
 
--   [Chainlink Documentation](https://docs.chain.link/)
--   [Foundry Documentation](https://book.getfoundry.sh/)
-
-### TODO
-
-[ ] Add bash scripts to interact with contracts using `cast`
-
-[ ] Make deploying contracts to `anvil` simpler
+-[Chainlink Documentation](https://docs.chain.link/)
+-[Foundry Documentation](https://book.getfoundry.sh/)
+-[Hardhat Documentation](https://hardhat.org/docs)
