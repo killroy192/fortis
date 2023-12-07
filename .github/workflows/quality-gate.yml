@@ -26,6 +26,8 @@ jobs:
         run: make install-ci
       - name: code quality
         run: make lint
+      - name: Run harhat compilation
+        run: make hh-build
       - name: Run unit tests
         run: make test
       - name: Run demo deployment
