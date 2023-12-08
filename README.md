@@ -111,7 +111,7 @@ To trade ETH\fUSDC with [SwapAPP](https://github.com/killroy192/fortis/blob/main
 make trade-demo network=arbitrum-sepolia amount={eth_to_trade}
 ```
 
-*note:* SwappApp charges fixed 0.001 ETH fee for trade , modify `trade.task.js` if needed.
+*note:* SwappApp and trade script charges fixed 0.00025 ETH fee for trade, modify `trade.task.js` if needed.
 
 ## Contributing
 
