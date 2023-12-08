@@ -4,14 +4,14 @@ const path = require("node:path");
 
 const getFilePath = (hre) => {
   return path.resolve(
-    hre.userConfig.networks[hre.network.name]?.deploy?.logFile || "",
+    hre.userConfig.networks[hre.network.name]?.deployment?.logFile || "",
   );
 };
 
-const isLoggedNetwork = (hre) =>
-  hre.userConfig.networks[hre.network.name]?.deploy?.logFile;
+const isLoggedNetwork = (hre) => 
+  hre.userConfig.networks[hre.network.name]?.deployment?.logFile;
 const isVerifyNetwork = (hre) =>
-  hre.userConfig.networks[hre.network.name]?.deploy?.verify;
+  hre.userConfig.networks[hre.network.name]?.deployment?.verify;
 
 const getDeploymentLockData = async (hre) => {
   const filePath = getFilePath(hre);

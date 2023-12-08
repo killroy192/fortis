@@ -800,7 +800,7 @@ export const usdcConfig = {
 } as const;
 
 export const oracleConfig = {
-  address: "0x2dD4Fa7aFE20B2e8f497CBBfC67A7D5c30Cee60E" as `0x${string}`,
+  address: "0x5D6E8131e986CDF64438baC30AAa1faF231db881" as `0x${string}`,
   abi: [
     {
       inputs: [],
@@ -1283,7 +1283,7 @@ export const oracleConfig = {
 };
 
 export const swapAppConfig = {
-  address: "0x233DAAf8e1a6ED70A5A7e0D136EA9453913AC9F6",
+  address: "0x4c4254Bd26a07AfC577FD89717516C12243335D3",
   abi: [
     {
       inputs: [

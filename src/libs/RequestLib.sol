@@ -25,7 +25,7 @@ library RequestLib {
 
     function generateId(
         address callbackContract,
-        bytes memory callbackArgs,
+        bytes calldata callbackArgs,
         uint256 nonce,
         address sender
     ) public pure returns (bytes32) {
@@ -38,7 +38,7 @@ library RequestLib {
     function addRequest(
         Requests storage requests,
         address callbackContract,
-        bytes memory callbackArgs,
+        bytes calldata callbackArgs,
         uint256 nonce,
         address sender
     ) external returns (bool) {

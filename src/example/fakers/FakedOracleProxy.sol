@@ -54,7 +54,7 @@ contract FakedOracleProxy is
 
     function fallbackCall(
         address callbackContract,
-        bytes memory callbackArgs,
+        bytes calldata callbackArgs,
         uint256 nonce,
         address sender
     ) external returns (bool) {
@@ -69,7 +69,7 @@ contract FakedOracleProxy is
 
     function previewFallbackCall(
         address callbackContract,
-        bytes memory callbackArgs,
+        bytes calldata callbackArgs,
         uint256 nonce,
         address sender
     ) public view returns (bytes32, bool, uint256) {
@@ -84,7 +84,7 @@ contract FakedOracleProxy is
 
     function addRequest(
         address callbackContract,
-        bytes memory callbackArgs,
+        bytes calldata callbackArgs,
         uint256 nonce,
         address sender
     ) external payable returns (bool) {
@@ -99,7 +99,7 @@ contract FakedOracleProxy is
 
     function addFakeRequest(
         address callbackContract,
-        bytes memory callbackArgs,
+        bytes calldata callbackArgs,
         uint256 nonce,
         address sender
     ) external payable returns (bool) {

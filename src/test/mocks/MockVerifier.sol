@@ -13,7 +13,7 @@ contract MockVerifierFeeManager is IVerifierFeeManager, IFeeManager {
         address,
         bytes memory,
         address
-    ) external view returns (IAsset memory, IAsset memory, uint256) {
+    ) external pure returns (IAsset memory, IAsset memory, uint256) {
         return (
             IAsset({assetAddress: i_nativeAddress(), amount: 0}),
             IAsset({assetAddress: i_nativeAddress(), amount: 0}),

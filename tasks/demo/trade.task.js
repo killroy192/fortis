@@ -65,6 +65,8 @@ async function trade(toSell, hre) {
     }),
   );
 
+  console.log("nonce", nonce);
+
   console.log("\nexecute trade");
 
   console.log("USD balance before trade: ", await usdc.balanceOf(signerAddr));

@@ -77,6 +77,10 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         meta.creator = msg.sender;
     }
 
+    function decimals() public virtual returns (uint8) {
+        return 18;
+    }
+
     function onRegister(uint256 id) external {
         if (meta.approved || msg.sender != meta.creator) {
             revert OnRegisterFailed(id, msg.sender);
@@ -88,7 +92,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
 
     function _addRequest(
         address callbackContract,
-        bytes memory callbackArgs,
+        bytes calldata callbackArgs,
         uint256 nonce,
         address sender
     ) internal {
@@ -97,7 +101,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
 
     function addRequest(
         address callbackContract,
-        bytes memory callbackArgs,
+        bytes calldata callbackArgs,
         uint256 nonce,
         address sender
     ) external payable nonZeroPayment returns (bool) {
@@ -165,7 +169,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
 
     function fallbackCall(
         address callbackContract,
-        bytes memory callbackArgs,
+        bytes calldata callbackArgs,
         uint256 nonce,
         address sender
     ) external nonReentrant returns (bool) {
@@ -180,15 +184,17 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
             revert InvalidRequestsExecution(id);
         }
 
-        // TODO: decimals 8 -> 18
-
         (, int256 price, , , ) = priceFeed.latestRoundData();
+
+        uint8 decimalsDiff = decimals() - priceFeed.decimals();
+
+        if (decimalsDiff > 0) {
+            price = price * SafeCast.toInt256(10 ** decimalsDiff);
+        }
 
         bool success = IOracleConsumerContract(callbackContract).consume(
             ForwardData({
-                // price convertion to 18 decimals is hardcoded for ETH\USD
-                // TODO: implement flexible conversion
-                price: price * 10 ** 10,
+                price: price,
                 feedType: FeedType.PriceFeed,
                 forwardArguments: callbackArgs
             })
@@ -211,7 +217,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
 
     function previewFallbackCall(
         address callbackContract,
-        bytes memory callbackArgs,
+        bytes calldata callbackArgs,
         uint256 nonce,
         address sender
     ) public view returns (bytes32, bool, uint256) {

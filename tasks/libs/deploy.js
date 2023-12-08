@@ -1,3 +1,5 @@
+const { TASK_COMPILE } = require("hardhat/builtin-tasks/task-names");
+
 const {
   isVerifyNetwork,
   getDeploymentLockData,
@@ -101,6 +103,7 @@ const deployOnlyChanged =
 
 module.exports = async function main(config, hre) {
   try {
+    await hre.run(TASK_COMPILE);
     const networkName = hre.network.name;
 
     const currentDeploymentLock = await getDeploymentLockData(hre);
