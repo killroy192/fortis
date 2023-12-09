@@ -40,7 +40,6 @@ const config = (externals) => [
         VerifierLib: (deploymentLock) => deploymentLock.VerifierLib.addr,
       },
     },
-    skipVerify: true,
   },
 ];
 

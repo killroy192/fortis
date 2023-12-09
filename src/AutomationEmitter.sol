@@ -6,7 +6,7 @@ import {IAutomationEmitter} from "./interfaces/IAutomationEmitter.sol";
 contract AutomationEmitter is IAutomationEmitter {
     function emitAutomationEvent(
         address callbackContract,
-        bytes memory callbackArgs,
+        bytes calldata callbackArgs,
         uint256 nonce,
         address sender
     ) external returns (bool) {

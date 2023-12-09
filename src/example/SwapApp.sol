@@ -33,7 +33,7 @@ contract SwapApp is IOracleConsumerContract {
     }
 
     function trade(
-        TradeParamsStruct memory tradeParams,
+        TradeParamsStruct calldata tradeParams,
         uint256 nonce
     ) external payable returns (bool) {
         bool success = IOracle(oracle).addRequest{value: msg.value}(
@@ -49,7 +49,7 @@ contract SwapApp is IOracleConsumerContract {
     }
 
     function notAutomatedTrade(
-        TradeParamsStruct memory tradeParams,
+        TradeParamsStruct calldata tradeParams,
         uint256 nonce
     ) external payable returns (bool) {
         bool success = IFakedOracle(oracle).addFakeRequest{value: msg.value}(
@@ -64,7 +64,7 @@ contract SwapApp is IOracleConsumerContract {
         return success;
     }
 
-    function consume(ForwardData memory forwardData) external returns (bool) {
+    function consume(ForwardData calldata forwardData) external returns (bool) {
         TradeParamsStruct memory tradeParams = abi.decode(
             forwardData.forwardArguments,
             (TradeParamsStruct)

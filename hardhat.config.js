@@ -46,7 +46,7 @@ module.exports = {
     },
     localhost: {
       deployment: {
-        logFile: "local.deployment-lock.json",
+        logFile: "./local.deployment-lock.json",
         externals: DEFAULT_EXTERNALS,
       },
     },
@@ -54,7 +54,7 @@ module.exports = {
       url: config?.parsed?.ARBITRUM_SEPOLIA_RPC || DEFAULT_RPC,
       accounts: deployerAccounts,
       deployment: {
-        logFile: "deployment-lock.json",
+        logFile: "./deployment-lock.json",
         verify: true,
         externals: {
           verifier: "0x2ff010DEbC1297f19579B4246cad07bd24F2488A",

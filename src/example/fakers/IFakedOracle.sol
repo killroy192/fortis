@@ -7,7 +7,7 @@ import {IOracle} from "src/interfaces/IOracle.sol";
 interface IFakedOracle is IOracle {
     function addFakeRequest(
         address callbackContract,
-        bytes memory callbackArgs,
+        bytes calldata callbackArgs,
         uint256 nonce,
         address sender
     ) external payable returns (bool);

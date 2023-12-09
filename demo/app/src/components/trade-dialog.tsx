@@ -156,7 +156,7 @@ const TradeDialog = ({
 
     const result = await trade({
       args: [tradeArgs, nonce],
-      value: parseEther("0.005")
+      value: parseEther("0.00025")
     });
     const swapAddress: `0x${string}` = swapAppConfig.address;
     const bytesCallbackArgs = coder.encode(

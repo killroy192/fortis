@@ -65,12 +65,14 @@ async function trade(toSell, hre) {
     }),
   );
 
+  console.log("nonce", nonce);
+
   console.log("\nexecute trade");
 
   console.log("USD balance before trade: ", await usdc.balanceOf(signerAddr));
 
   await consumer.trade(tradeArgs, nonce, {
-    value: hre.ethers.parseEther("0.001"),
+    value: hre.ethers.parseEther("0.00025"),
   });
 
   console.log("wait for automation execution and balances updates..");
