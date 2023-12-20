@@ -36,7 +36,7 @@ abi :; npx hardhat export-abi
 
 network?=hardhat
 
-deploy :; npx hardhat --network $(network) deploy
+deploy :; npx hardhat --network $(network) deploy-bundle
 
 deploy-demo :; npx hardhat --network $(network) demo:deploy
 

@@ -29,6 +29,7 @@
     "hardhat-abi-exporter": "^2.10.1"
   },
   "devDependencies": {
+    "@dgma/hardhat-sol-bundler": "^0.3.0",
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
     "@nomicfoundation/hardhat-ethers": "^3.0.0",
     "@nomicfoundation/hardhat-foundry": "^1.1.1",
