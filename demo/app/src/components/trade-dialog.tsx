@@ -89,8 +89,8 @@ const TradeDialog = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      from: 0,
-      to: 0,
+      from: 0.005,
+      to: 0.005 * Number(prices[pair]),
     },
   });
 
