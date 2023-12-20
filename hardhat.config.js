@@ -4,7 +4,6 @@ require("@nomicfoundation/hardhat-foundry");
 require("@nomicfoundation/hardhat-toolbox");
 require("@dgma/hardhat-sol-bundler");
 require("./tasks");
-require("hardhat-abi-exporter");
 const { ZeroHash } = require("ethers");
 const deployments = require("./deployment.config");
 
