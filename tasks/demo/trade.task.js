@@ -1,13 +1,16 @@
-const { getDeploymentLockData } = require("../libs/common");
+const { getLock } = require("@dgma/hardhat-sol-bundler");
 
 async function fundSwapApp(lock, usdc, hre) {
   const dec = await usdc.decimals();
 
-  const balance = await usdc.balanceOf(lock.SwapApp.addr);
+  const balance = await usdc.balanceOf(lock.SwapApp.address);
 
   if (balance < hre.ethers.parseUnits("1000000", dec)) {
     console.log("mint more...");
-    await usdc.mint(lock.SwapApp.addr, hre.ethers.parseUnits("1000000", dec));
+    await usdc.mint(
+      lock.SwapApp.address,
+      hre.ethers.parseUnits("1000000", dec),
+    );
   }
 
   console.log("done\n");
@@ -23,18 +26,20 @@ async function trade(toSell, hre) {
   console.log("prepare..\n");
   const [signer] = await ethers.getSigners();
   const signerAddr = await signer.getAddress();
-  const lock = (await getDeploymentLockData(hre))[network.name];
+  const lock = getLock(
+    hre.userConfig.networks[hre.network.name].deployment.lockFile,
+  )[hre.network.name];
 
-  const consumer = await ethers.getContractAt("SwapApp", lock.SwapApp.addr);
+  const consumer = await ethers.getContractAt("SwapApp", lock.SwapApp.address);
 
-  const wethAddress = lock.FWETH.addr;
-  const usdcAddress = lock.FUSDC.addr;
+  const wethAddress = lock.FWETH.address;
+  const usdcAddress = lock.FUSDC.address;
 
   const weth = await ethers.getContractAt("FWETH", wethAddress);
   const usdc = await ethers.getContractAt("FUSDC", usdcAddress);
   const oracle = await ethers.getContractAt(
     "FakedOracleProxy",
-    lock.FakedOracleProxy.addr,
+    lock.FakedOracleProxy.address,
   );
 
   console.log("fund swappApp with USDC if needed\n");
@@ -44,7 +49,7 @@ async function trade(toSell, hre) {
   console.log(`get and approve ${toSell} weth for trading\n`);
   const amountIn = ethers.parseEther(toSell);
   await weth.deposit({ value: amountIn });
-  await weth.approve(lock.SwapApp.addr, amountIn);
+  await weth.approve(lock.SwapApp.address, amountIn);
 
   console.log("generate trade input\n");
   const nonce = Math.ceil(Math.random() * 100);

@@ -32,27 +32,21 @@ lint :; npx solhint src/**/*.sol
 
 hh-node :; npx hardhat node
 
-abi :; npx hardhat export-abi
-
 network?=hardhat
 
-deploy :; npx hardhat --network $(network) deploy
-
-deploy-demo :; npx hardhat --network $(network) demo:deploy
+deploy :; npx hardhat --network $(network) deploy-bundle
 
 amount?=1
 oracle?=Oracle
 
 refund :; npx hardhat --network $(network) refund --amount $(amount) --oracle $(oracle)
 
-refund-demo :; npx hardhat --network $(network) refund --amount $(amount) --oracle FakedOracle
-
 onRegister :; npx hardhat --network $(network) onRegister --id $(id) --oracle $(oracle)
-
-onRegister-demo :; npx hardhat --network $(network) onRegister --id $(id) --oracle FakedOracle
 
 eth?=0.001
 
 trade-demo :;  npx hardhat --network $(network) demo:trade --amount $(eth)
+
+migrate-demo :; npx hardhat --network $(network) demo:migrate
 
 -include ${FCT_PLUGIN_PATH}/makefile-external

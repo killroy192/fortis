@@ -4,6 +4,10 @@ pragma solidity ^0.8.16;
 import {Oracle} from "src/Oracle.sol";
 import {IFakedOracle} from "./IFakedOracle.sol";
 
+/**
+ * @dev Faked oracle extends Oracle to make possible to emit 'fake' events.
+ * Fake events do not handled by Chainlink Automation and emulates Chainlink Automation anavailability
+ */
 contract FakedOracle is Oracle, IFakedOracle {
     event FakeAutomationTrigger(
         address callBackContract,
