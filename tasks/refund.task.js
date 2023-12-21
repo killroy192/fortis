@@ -1,18 +1,20 @@
-const { getDeploymentLockData } = require("./libs/common");
+const { getLock } = require("@dgma/hardhat-sol-bundler");
 
 /**
  * Simple script to run onRegister in to safely set keeper id
  */
 
 async function refund(oracleContractName, linkToSpend, hre) {
-  const lock = (await getDeploymentLockData(hre))[hre.network.name];
+  const lock = getLock(
+    hre.userConfig.networks[hre.network.name].deployment.lockFile,
+  )[hre.network.name];
   const [signer] = await ethers.getSigners();
 
   console.log("swap link to eth and refund oracle");
 
   const oracle = await hre.ethers.getContractAt(
     oracleContractName,
-    lock[oracleContractName].addr,
+    lock[oracleContractName].address,
   );
 
   const linkToken = await hre.ethers.getContractAt(
@@ -25,7 +27,7 @@ async function refund(oracleContractName, linkToSpend, hre) {
   const resp = await oracle.swapPreview(amount);
   console.log("swapPreview", resp);
   if (resp[0]) {
-    await linkToken.approve(lock[oracleContractName].addr, amount);
+    await linkToken.approve(lock[oracleContractName].address, amount);
     await oracle.swap(await signer.getAddress(), amount);
     console.log("done");
   } else {

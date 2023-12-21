@@ -1,14 +1,16 @@
-const { getDeploymentLockData } = require("./libs/common");
+const { getLock } = require("@dgma/hardhat-sol-bundler");
 
 /**
  * Simple script to run onRegister in to safely set keeper id
  */
 async function onRegister(oracleContractName, id, hre) {
-  const lock = (await getDeploymentLockData(hre))[hre.network.name];
+  const lock = getLock(
+    hre.userConfig.networks[hre.network.name].deployment.lockFile,
+  )[hre.network.name];
 
   const oracle = await hre.ethers.getContractAt(
     oracleContractName,
-    lock[oracleContractName].addr,
+    lock[oracleContractName].address,
   );
 
   await oracle.onRegister(BigInt(id));

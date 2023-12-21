@@ -47,6 +47,6 @@ eth?=0.001
 
 trade-demo :;  npx hardhat --network $(network) demo:trade --amount $(eth)
 
-migration-demo :; npx hardhat --network $(network) demo:migrate
+migrate-demo :; npx hardhat --network $(network) demo:migrate
 
 -include ${FCT_PLUGIN_PATH}/makefile-external
