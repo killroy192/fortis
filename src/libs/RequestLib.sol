@@ -29,10 +29,7 @@ library RequestLib {
         uint256 nonce,
         address sender
     ) public pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(callbackContract, callbackArgs, nonce, sender)
-            );
+        return keccak256(abi.encode(callbackContract, callbackArgs, nonce, sender));
     }
 
     function addRequest(
@@ -55,10 +52,7 @@ library RequestLib {
         return true;
     }
 
-    function fulfillRequest(
-        Requests storage requests,
-        bytes32 _id
-    ) external returns (bool) {
+    function fulfillRequest(Requests storage requests, bytes32 _id) external returns (bool) {
         requests.requests[_id] = RequestStats({
             status: RequestStatus.Fulfilled,
             blockNumber: block.number,
@@ -68,10 +62,11 @@ library RequestLib {
         return true;
     }
 
-    function getRequest(
-        Requests storage requests,
-        bytes32 _id
-    ) external view returns (RequestStats memory) {
+    function getRequest(Requests storage requests, bytes32 _id)
+        external
+        view
+        returns (RequestStats memory)
+    {
         return requests.requests[_id];
     }
 }

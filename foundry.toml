@@ -8,8 +8,8 @@ src = 'src'
 test = 'src/test'
 
 [fmt]
-line_length = 120
-bracket_spacing = true
+line_length = 100
+bracket_spacing = false
 wrap_comments = true
 
 # Remappings in remappings.txt

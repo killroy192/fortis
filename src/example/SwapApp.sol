@@ -10,10 +10,7 @@ import {IFakedOracle} from "./fakers/IFakedOracle.sol";
  * @title SwapApp
  */
 contract SwapApp is IOracleConsumerContract {
-    error UnsuccesfullTradeInititation(
-        TradeParamsStruct tradeParams,
-        uint256 nonce
-    );
+    error UnsuccesfullTradeInititation(TradeParamsStruct tradeParams, uint256 nonce);
 
     event Price(uint256 price);
 
@@ -32,15 +29,13 @@ contract SwapApp is IOracleConsumerContract {
         oracle = _oracle;
     }
 
-    function trade(
-        TradeParamsStruct calldata tradeParams,
-        uint256 nonce
-    ) external payable returns (bool) {
+    function trade(TradeParamsStruct calldata tradeParams, uint256 nonce)
+        external
+        payable
+        returns (bool)
+    {
         bool success = IOracle(oracle).addRequest{value: msg.value}(
-            address(this),
-            abi.encode(tradeParams),
-            nonce,
-            msg.sender
+            address(this), abi.encode(tradeParams), nonce, msg.sender
         );
         if (!success) {
             revert UnsuccesfullTradeInititation(tradeParams, nonce);
@@ -48,15 +43,13 @@ contract SwapApp is IOracleConsumerContract {
         return success;
     }
 
-    function notAutomatedTrade(
-        TradeParamsStruct calldata tradeParams,
-        uint256 nonce
-    ) external payable returns (bool) {
+    function notAutomatedTrade(TradeParamsStruct calldata tradeParams, uint256 nonce)
+        external
+        payable
+        returns (bool)
+    {
         bool success = IFakedOracle(oracle).addFakeRequest{value: msg.value}(
-            address(this),
-            abi.encode(tradeParams),
-            nonce,
-            msg.sender
+            address(this), abi.encode(tradeParams), nonce, msg.sender
         );
         if (!success) {
             revert UnsuccesfullTradeInititation(tradeParams, nonce);
@@ -65,24 +58,20 @@ contract SwapApp is IOracleConsumerContract {
     }
 
     function consume(ForwardData calldata forwardData) external returns (bool) {
-        TradeParamsStruct memory tradeParams = abi.decode(
-            forwardData.forwardArguments,
-            (TradeParamsStruct)
-        );
-        uint256 successfullyTradedTokens = _swapTokens(
-            forwardData.price,
-            tradeParams
-        );
+        TradeParamsStruct memory tradeParams =
+            abi.decode(forwardData.forwardArguments, (TradeParamsStruct));
+        uint256 successfullyTradedTokens = _swapTokens(forwardData.price, tradeParams);
         emit TradeExecuted(successfullyTradedTokens, forwardData.price);
         return true;
     }
 
     //swap logic
 
-    function _scalePriceToTokenDecimals(
-        address tokenOut,
-        int256 priceFromReport
-    ) private view returns (uint256) {
+    function _scalePriceToTokenDecimals(address tokenOut, int256 priceFromReport)
+        private
+        view
+        returns (uint256)
+    {
         uint8 pricefeedDecimals = 18;
         uint8 tokenOutDecimals = IERC20Metadata(tokenOut).decimals();
         if (tokenOutDecimals < pricefeedDecimals) {
@@ -98,32 +87,22 @@ contract SwapApp is IOracleConsumerContract {
         return uint256(priceFromReport);
     }
 
-    function _swapTokens(
-        int256 price,
-        TradeParamsStruct memory tradeParams
-    ) private returns (uint256) {
-        uint8 inputTokenDecimals = IERC20Metadata(tradeParams.tokenIn)
-            .decimals();
-        uint256 priceForOneToken = _scalePriceToTokenDecimals(
-            tradeParams.tokenOut,
-            price
-        );
+    function _swapTokens(int256 price, TradeParamsStruct memory tradeParams)
+        private
+        returns (uint256)
+    {
+        uint8 inputTokenDecimals = IERC20Metadata(tradeParams.tokenIn).decimals();
+        uint256 priceForOneToken = _scalePriceToTokenDecimals(tradeParams.tokenOut, price);
 
         emit Price(priceForOneToken);
 
-        uint256 outputAmount = (priceForOneToken * tradeParams.amountIn) /
-            10 ** inputTokenDecimals;
+        uint256 outputAmount = (priceForOneToken * tradeParams.amountIn) / 10 ** inputTokenDecimals;
 
         IERC20Metadata(tradeParams.tokenIn).transferFrom(
-            tradeParams.recipient,
-            address(this),
-            tradeParams.amountIn
+            tradeParams.recipient, address(this), tradeParams.amountIn
         );
 
-        IERC20Metadata(tradeParams.tokenOut).transfer(
-            tradeParams.recipient,
-            outputAmount
-        );
+        IERC20Metadata(tradeParams.tokenOut).transfer(tradeParams.recipient, outputAmount);
 
         return outputAmount;
     }

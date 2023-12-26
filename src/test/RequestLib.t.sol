@@ -28,12 +28,7 @@ contract RequestsLibTest is Test {
     }
 
     function setUp() public {
-        id = RequestLib.generateId(
-            callbackContract,
-            callbackArgs,
-            nonce,
-            msg.sender
-        );
+        id = RequestLib.generateId(callbackContract, callbackArgs, nonce, msg.sender);
         requests.requests[id] = RequestLib.RequestStats({
             status: RequestLib.RequestStatus.Init,
             blockNumber: 0,
@@ -44,16 +39,7 @@ contract RequestsLibTest is Test {
     function test_generateId() public {
         assertEq(
             abi.encode(id),
-            abi.encode(
-                keccak256(
-                    abi.encode(
-                        callbackContract,
-                        callbackArgs,
-                        nonce,
-                        msg.sender
-                    )
-                )
-            )
+            abi.encode(keccak256(abi.encode(callbackContract, callbackArgs, nonce, msg.sender)))
         );
     }
 
@@ -77,13 +63,7 @@ contract RequestsLibTest is Test {
         emit RequestAdded(msg.sender, 50);
 
         // execution
-        RequestLib.addRequest(
-            requests,
-            callbackContract,
-            callbackArgs,
-            nonce,
-            msg.sender
-        );
+        RequestLib.addRequest(requests, callbackContract, callbackArgs, nonce, msg.sender);
 
         // check result
         aseertEqRequests(
@@ -100,13 +80,7 @@ contract RequestsLibTest is Test {
         // fake block.number
         vm.roll(39);
         // add request
-        RequestLib.addRequest(
-            requests,
-            callbackContract,
-            callbackArgs,
-            nonce,
-            msg.sender
-        );
+        RequestLib.addRequest(requests, callbackContract, callbackArgs, nonce, msg.sender);
 
         // config to expect emit proper event
         vm.expectEmit(true, true, false, false);

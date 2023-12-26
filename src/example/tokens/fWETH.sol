@@ -26,7 +26,7 @@ contract FWETH is ERC20 {
     }
 
     function withdraw(uint256 val) public {
-        (bool callSuccess, ) = msg.sender.call{value: val}("");
+        (bool callSuccess,) = msg.sender.call{value: val}("");
 
         if (!callSuccess) {
             revert TransferFailed();

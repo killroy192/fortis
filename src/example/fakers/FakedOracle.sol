@@ -6,14 +6,12 @@ import {IFakedOracle} from "./IFakedOracle.sol";
 
 /**
  * @dev Faked oracle extends Oracle to make possible to emit 'fake' events.
- * Fake events do not handled by Chainlink Automation and emulates Chainlink Automation anavailability
+ * Fake events do not handled by Chainlink Automation and emulates Chainlink Automation
+ * anavailability
  */
 contract FakedOracle is Oracle, IFakedOracle {
     event FakeAutomationTrigger(
-        address callBackContract,
-        bytes callBackArgs,
-        uint256 nonce,
-        address sender
+        address callBackContract, bytes callBackArgs, uint256 nonce, address sender
     );
 
     constructor(
@@ -37,9 +35,7 @@ contract FakedOracle is Oracle, IFakedOracle {
             _requestTimeout
         )
     // solhint-disable-next-line no-empty-blocks
-    {
-
-    }
+    {}
 
     function addFakeRequest(
         address callbackContract,
@@ -48,12 +44,7 @@ contract FakedOracle is Oracle, IFakedOracle {
         address sender
     ) external payable returns (bool) {
         _addRequest(callbackContract, callbackArgs, nonce, sender);
-        emit FakeAutomationTrigger(
-            callbackContract,
-            callbackArgs,
-            nonce,
-            sender
-        );
+        emit FakeAutomationTrigger(callbackContract, callbackArgs, nonce, sender);
         return true;
     }
 }

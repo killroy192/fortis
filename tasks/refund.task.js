@@ -5,9 +5,9 @@ const { getLock } = require("@dgma/hardhat-sol-bundler");
  */
 
 async function refund(oracleContractName, linkToSpend, hre) {
-  const lock = getLock(
-    hre.userConfig.networks[hre.network.name].deployment.lockFile,
-  )[hre.network.name];
+  const lock = getLock(hre.userConfig.networks[hre.network.name].deployment.lockFile)[
+    hre.network.name
+  ];
   const [signer] = await ethers.getSigners();
 
   console.log("swap link to eth and refund oracle");

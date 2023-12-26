@@ -29,14 +29,12 @@ const upgradeMockOracle = async (hre, lock) => {
   console.log("\ndone\n");
 };
 
-task("demo:migrate", "upgrades demo-related contracts").setAction(
-  async (_, hre) => {
-    const lock = getLock(
-      hre.userConfig.networks[hre.network.name].deployment.lockFile,
-    )[hre.network.name];
-    return upgradeMockOracle(hre, lock).catch((error) => {
-      console.error(error);
-      process.exitCode = 1;
-    });
-  },
-);
+task("demo:migrate", "upgrades demo-related contracts").setAction(async (_, hre) => {
+  const lock = getLock(hre.userConfig.networks[hre.network.name].deployment.lockFile)[
+    hre.network.name
+  ];
+  return upgradeMockOracle(hre, lock).catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+});

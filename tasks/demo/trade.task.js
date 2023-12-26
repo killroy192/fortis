@@ -7,10 +7,7 @@ async function fundSwapApp(lock, usdc, hre) {
 
   if (balance < hre.ethers.parseUnits("1000000", dec)) {
     console.log("mint more...");
-    await usdc.mint(
-      lock.SwapApp.address,
-      hre.ethers.parseUnits("1000000", dec),
-    );
+    await usdc.mint(lock.SwapApp.address, hre.ethers.parseUnits("1000000", dec));
   }
 
   console.log("done\n");
@@ -26,9 +23,9 @@ async function trade(toSell, hre) {
   console.log("prepare..\n");
   const [signer] = await ethers.getSigners();
   const signerAddr = await signer.getAddress();
-  const lock = getLock(
-    hre.userConfig.networks[hre.network.name].deployment.lockFile,
-  )[hre.network.name];
+  const lock = getLock(hre.userConfig.networks[hre.network.name].deployment.lockFile)[
+    hre.network.name
+  ];
 
   const consumer = await ethers.getContractAt("SwapApp", lock.SwapApp.address);
 
@@ -37,10 +34,7 @@ async function trade(toSell, hre) {
 
   const weth = await ethers.getContractAt("FWETH", wethAddress);
   const usdc = await ethers.getContractAt("FUSDC", usdcAddress);
-  const oracle = await ethers.getContractAt(
-    "FakedOracleProxy",
-    lock.FakedOracleProxy.address,
-  );
+  const oracle = await ethers.getContractAt("FakedOracleProxy", lock.FakedOracleProxy.address);
 
   console.log("fund swappApp with USDC if needed\n");
 
@@ -88,9 +82,7 @@ async function trade(toSell, hre) {
   console.log("\nrun fallback check logic..");
 
   const bytesCallbackArgs = coder.encode(
-    [
-      "tuple(address recipient, address tokenIn, address tokenOut, uint256 amountIn)",
-    ],
+    ["tuple(address recipient, address tokenIn, address tokenOut, uint256 amountIn)"],
     [tradeArgs],
   );
 
