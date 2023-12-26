@@ -14,14 +14,6 @@
   "bugs": {
     "url": "https://github.com/killroy192/fortis-sdk/issues"
   },
-  "lint-staged": {
-    "src/**/*.sol": [
-      "solhint -q --fix",
-      "prettier --write"
-    ],
-    "integration/**/*.js": "prettier --write",
-    "deployment-lock.json": "prettier --write"
-  },
   "dependencies": {
     "@chainlink/contracts": "^0.8.0",
     "@openzeppelin/contracts": "^5.0.0",
@@ -44,10 +36,8 @@
     "hardhat-gas-reporter": "^1.0.8",
     "husky": "^8.0.3",
     "lint-staged": "^15.1.0",
-    "prettier": "^3.1.0",
-    "prettier-plugin-solidity": "^1.2.0",
+    "prettier": "^3.1.1",
     "solhint": "^4.0.0",
-    "solhint-plugin-prettier": "^0.1.0",
     "solidity-coverage": "^0.8.1"
   }
 }

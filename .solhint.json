@@ -33,8 +33,5 @@
         "maxLength": 64
       }
     ]
-  },
-  "plugins": [
-    "prettier"
-  ]
+  }
 }
