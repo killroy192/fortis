@@ -2,16 +2,22 @@
 pragma solidity ^0.8.16;
 
 import {Log} from "@chainlink/contracts/src/v0.8/automation/interfaces/ILogAutomation.sol";
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import {LinkTokenInterface} from "@chainlink/contracts/src/v0.8/shared/interfaces/LinkTokenInterface.sol";
-// solhint-disable-next-line max-line-length
-import {IAutomationRegistryConsumer} from "@chainlink/contracts/src/v0.8/automation/interfaces/IAutomationRegistryConsumer.sol";
+import {AggregatorV3Interface} from
+    "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import {LinkTokenInterface} from
+    "@chainlink/contracts/src/v0.8/shared/interfaces/LinkTokenInterface.sol";
+import {IAutomationRegistryConsumer} from
+    "@chainlink/contracts/src/v0.8/automation/interfaces/IAutomationRegistryConsumer.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
 import {IOracle} from "./interfaces/IOracle.sol";
-import {IOracleConsumerContract, ForwardData, FeedType} from "./interfaces/IOracleCallBackContract.sol";
+import {
+    IOracleConsumerContract,
+    ForwardData,
+    FeedType
+} from "./interfaces/IOracleCallBackContract.sol";
 import {IAutomationEmitter} from "./interfaces/IAutomationEmitter.sol";
 import {BasicReport} from "./interfaces/BasicReport.sol";
 
@@ -35,6 +41,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
     IAutomationEmitter public immutable emitter;
 
     IVerifierProxy public immutable verifier;
+
     using VerifierLib for IVerifierProxy;
 
     AggregatorV3Interface public immutable priceFeed;
@@ -46,6 +53,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
     uint256 public immutable requestTimeout;
 
     RequestLib.Requests private _requests;
+
     using RequestLib for RequestLib.Requests;
 
     UpKeepMeta private meta;
@@ -106,37 +114,21 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         address sender
     ) external payable nonZeroPayment returns (bool) {
         _addRequest(callbackContract, callbackArgs, nonce, sender);
-        return
-            emitter.emitAutomationEvent(
-                callbackContract,
-                callbackArgs,
-                nonce,
-                sender
-            );
+        return emitter.emitAutomationEvent(callbackContract, callbackArgs, nonce, sender);
     }
 
     function performUpkeep(bytes calldata performData) external override {
         uint256 initGas = gasleft();
         // Decode the performData bytes passed in by CL Automation.
         // This contains the data returned by your implementation in checkCallback().
-        (bytes[] memory signedReports, bytes memory extraData) = abi.decode(
-            performData,
-            (bytes[], bytes)
-        );
+        (bytes[] memory signedReports, bytes memory extraData) =
+            abi.decode(performData, (bytes[], bytes));
 
-        (
-            address callbackContract,
-            bytes memory callbackArgs,
-            uint256 nonce,
-            address sender
-        ) = abi.decode(extraData, (address, bytes, uint256, address));
+        (address callbackContract, bytes memory callbackArgs, uint256 nonce, address sender) =
+            abi.decode(extraData, (address, bytes, uint256, address));
 
-        (bytes32 id, RequestLib.RequestStats memory reqStats) = getRequestProps(
-            callbackContract,
-            callbackArgs,
-            nonce,
-            sender
-        );
+        (bytes32 id, RequestLib.RequestStats memory reqStats) =
+            getRequestProps(callbackContract, callbackArgs, nonce, sender);
 
         // prevent duplicated request execution
         if (reqStats.status != RequestLib.RequestStatus.Pending) {
@@ -159,10 +151,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
 
         _requests.fulfillRequest(id);
 
-        if (
-            FeeLib.calcFee((initGas - gasleft()) * tx.gasprice) >
-            reqStats.executionFee
-        ) {
+        if (FeeLib.calcFee((initGas - gasleft()) * tx.gasprice) > reqStats.executionFee) {
             revert FeeIsTooSmall(id);
         }
     }
@@ -173,18 +162,14 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         uint256 nonce,
         address sender
     ) external nonReentrant returns (bool) {
-        (bytes32 id, bool executable, uint256 reward) = previewFallbackCall(
-            callbackContract,
-            callbackArgs,
-            nonce,
-            sender
-        );
+        (bytes32 id, bool executable, uint256 reward) =
+            previewFallbackCall(callbackContract, callbackArgs, nonce, sender);
 
         if (!executable) {
             revert InvalidRequestsExecution(id);
         }
 
-        (, int256 price, , , ) = priceFeed.latestRoundData();
+        (, int256 price,,,) = priceFeed.latestRoundData();
 
         uint8 decimalsDiff = decimals() - priceFeed.decimals();
 
@@ -193,18 +178,14 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         }
 
         bool success = IOracleConsumerContract(callbackContract).consume(
-            ForwardData({
-                price: price,
-                feedType: FeedType.PriceFeed,
-                forwardArguments: callbackArgs
-            })
+            ForwardData({price: price, feedType: FeedType.PriceFeed, forwardArguments: callbackArgs})
         );
 
         if (!success) {
             revert FailedRequestsConsumption(id);
         }
 
-        (bool rewardingSuccess, ) = payable(msg.sender).call{value: reward}("");
+        (bool rewardingSuccess,) = payable(msg.sender).call{value: reward}("");
 
         if (!rewardingSuccess) {
             revert FailedRequestsConsumption(id);
@@ -221,15 +202,11 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         uint256 nonce,
         address sender
     ) public view returns (bytes32, bool, uint256) {
-        (bytes32 id, RequestLib.RequestStats memory reqStats) = getRequestProps(
-            callbackContract,
-            callbackArgs,
-            nonce,
-            sender
-        );
+        (bytes32 id, RequestLib.RequestStats memory reqStats) =
+            getRequestProps(callbackContract, callbackArgs, nonce, sender);
 
-        bool executable = reqStats.status == RequestLib.RequestStatus.Pending &&
-            reqStats.blockNumber + requestTimeout <= block.number;
+        bool executable = reqStats.status == RequestLib.RequestStatus.Pending
+            && reqStats.blockNumber + requestTimeout <= block.number;
 
         return (id, executable, reqStats.executionFee);
     }
@@ -237,10 +214,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
     /**
      * @notice uses LINK's transferAndCall to LINK and add funding to an upkeep
      */
-    function swap(
-        address sender,
-        uint256 amount
-    ) external nonReentrant returns (bool) {
+    function swap(address sender, uint256 amount) external nonReentrant returns (bool) {
         (bool doTransfer, uint256 reward) = swapPreview(amount);
 
         if (doTransfer) {
@@ -250,24 +224,18 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
 
             link.approve(registry, amount);
 
-            IAutomationRegistryConsumer(registry).addFunds(
-                meta.id,
-                SafeCast.toUint96(amount)
-            );
+            IAutomationRegistryConsumer(registry).addFunds(meta.id, SafeCast.toUint96(amount));
 
-            (bool rewardingSuccess, ) = payable(sender).call{value: reward}("");
+            (bool rewardingSuccess,) = payable(sender).call{value: reward}("");
             return rewardingSuccess;
         }
         return doTransfer;
     }
 
     function swapPreview(uint256 amount) public view returns (bool, uint256) {
-        (, int256 linkPrice, , , ) = linkNativeFeed.latestRoundData();
+        (, int256 linkPrice,,,) = linkNativeFeed.latestRoundData();
         uint256 reward = FeeLib.fromDec(
-            uint256(linkPrice) *
-                FeeLib.fromDec(
-                    amount * (FeeLib.toDec(1) + FeeLib.swapPremium())
-                )
+            uint256(linkPrice) * FeeLib.fromDec(amount * (FeeLib.toDec(1) + FeeLib.swapPremium()))
         );
 
         uint256 maxReward = address(this).balance / 5;
@@ -283,12 +251,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         uint256 nonce,
         address sender
     ) private view returns (bytes32, RequestLib.RequestStats memory) {
-        bytes32 id = RequestLib.generateId(
-            callbackContract,
-            callbackArgs,
-            nonce,
-            sender
-        );
+        bytes32 id = RequestLib.generateId(callbackContract, callbackArgs, nonce, sender);
 
         return (id, _requests.getRequest(id));
     }

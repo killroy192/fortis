@@ -19,13 +19,10 @@ import {MockVerifier} from "./mocks/MockVerifier.sol";
 
 contract OracleTest is Test {
     event AutomationTrigger(
-        address callBackContract,
-        bytes callBackArgs,
-        uint nonce,
-        address sender
+        address callBackContract, bytes callBackArgs, uint256 nonce, address sender
     );
 
-    event SetOracleId(uint id);
+    event SetOracleId(uint256 id);
 
     Oracle private oracle;
     MockLinkDataFeed private LINK_ETH_data_dfeed = new MockLinkDataFeed();
@@ -34,8 +31,8 @@ contract OracleTest is Test {
     MockRegistry private registry = new MockRegistry();
     MockVerifier private verifier = new MockVerifier();
     AutomationEmitter private emitter = new AutomationEmitter();
-    uint private paymentForExecution = 1 * 10 ** 16;
-    uint private linkHoldings;
+    uint256 private paymentForExecution = 1 * 10 ** 16;
+    uint256 private linkHoldings;
 
     address private CALLBACK_CONTRACT = address(3);
     address private SENDER = address(4);
@@ -59,7 +56,7 @@ contract OracleTest is Test {
     }
 
     function test_OnRegister() public {
-        uint id = 123456343414215;
+        uint256 id = 123456343414215;
         vm.expectEmit();
         emit SetOracleId(id);
 
@@ -68,61 +65,35 @@ contract OracleTest is Test {
 
     function test_AddRequest() public {
         vm.expectEmit();
-        emit AutomationTrigger(
-            CALLBACK_CONTRACT,
-            abi.encodePacked("test"),
-            0,
-            SENDER
-        );
+        emit AutomationTrigger(CALLBACK_CONTRACT, abi.encodePacked("test"), 0, SENDER);
 
         oracle.addRequest{value: 1 * 10 ** 16}(
-            CALLBACK_CONTRACT,
-            abi.encodePacked("test"),
-            0,
-            SENDER
+            CALLBACK_CONTRACT, abi.encodePacked("test"), 0, SENDER
         );
     }
 
     function test_AddRequestRevertIfDuplicateRequest() public {
         vm.expectEmit();
 
-        emit AutomationTrigger(
-            CALLBACK_CONTRACT,
-            abi.encodePacked("test"),
-            0,
-            SENDER
-        );
+        emit AutomationTrigger(CALLBACK_CONTRACT, abi.encodePacked("test"), 0, SENDER);
 
         oracle.addRequest{value: paymentForExecution}(
-            CALLBACK_CONTRACT,
-            abi.encodePacked("test"),
-            0,
-            SENDER
+            CALLBACK_CONTRACT, abi.encodePacked("test"), 0, SENDER
         );
 
         vm.expectRevert();
         oracle.addRequest{value: paymentForExecution}(
-            CALLBACK_CONTRACT,
-            abi.encodePacked("test"),
-            0,
-            SENDER
+            CALLBACK_CONTRACT, abi.encodePacked("test"), 0, SENDER
         );
     }
 
     function test_PreviewFallbackCallIfTimoutHasNotPassed() public {
         oracle.addRequest{value: paymentForExecution}(
-            CALLBACK_CONTRACT,
-            abi.encodePacked("test"),
-            0,
-            SENDER
+            CALLBACK_CONTRACT, abi.encodePacked("test"), 0, SENDER
         );
 
-        (, bool executable, uint executionFee) = oracle.previewFallbackCall(
-            CALLBACK_CONTRACT,
-            abi.encodePacked("test"),
-            0,
-            SENDER
-        );
+        (, bool executable, uint256 executionFee) =
+            oracle.previewFallbackCall(CALLBACK_CONTRACT, abi.encodePacked("test"), 0, SENDER);
 
         assertEq(executable, false);
         assertEq(executionFee, paymentForExecution);
@@ -130,30 +101,20 @@ contract OracleTest is Test {
 
     function test_PreviewFallbackCall() public {
         oracle.addRequest{value: paymentForExecution}(
-            CALLBACK_CONTRACT,
-            abi.encodePacked("test"),
-            0,
-            SENDER
+            CALLBACK_CONTRACT, abi.encodePacked("test"), 0, SENDER
         );
 
         vm.roll(12);
 
-        (, bool executable, ) = oracle.previewFallbackCall(
-            CALLBACK_CONTRACT,
-            abi.encodePacked("test"),
-            0,
-            SENDER
-        );
+        (, bool executable,) =
+            oracle.previewFallbackCall(CALLBACK_CONTRACT, abi.encodePacked("test"), 0, SENDER);
 
         assertEq(executable, true);
     }
 
     function test_PerformUpkeep() public {
         oracle.addRequest{value: paymentForExecution}(
-            CALLBACK_CONTRACT,
-            abi.encodePacked("test"),
-            0,
-            SENDER
+            CALLBACK_CONTRACT, abi.encodePacked("test"), 0, SENDER
         );
 
         vm.roll(12);
@@ -163,20 +124,11 @@ contract OracleTest is Test {
             abi.encode(true)
         );
 
-        bytes32[3] memory reportContextData = [
-            bytes32(""),
-            bytes32(""),
-            bytes32("")
-        ];
+        bytes32[3] memory reportContextData = [bytes32(""), bytes32(""), bytes32("")];
         bytes memory reportData = bytes("");
         bytes[] memory signedReports = new bytes[](1);
         signedReports[0] = (abi.encode(reportContextData, reportData));
-        bytes memory extraData = abi.encode(
-            CALLBACK_CONTRACT,
-            abi.encodePacked("test"),
-            0,
-            SENDER
-        );
+        bytes memory extraData = abi.encode(CALLBACK_CONTRACT, abi.encodePacked("test"), 0, SENDER);
 
         bytes memory performData = abi.encode(signedReports, extraData);
 
@@ -188,22 +140,15 @@ contract OracleTest is Test {
 
         oracle.performUpkeep(performData);
 
-        (, bool executable, ) = oracle.previewFallbackCall(
-            CALLBACK_CONTRACT,
-            abi.encodePacked("test"),
-            0,
-            SENDER
-        );
+        (, bool executable,) =
+            oracle.previewFallbackCall(CALLBACK_CONTRACT, abi.encodePacked("test"), 0, SENDER);
 
         assertEq(executable, false);
     }
 
     function test_Fallback() public {
         oracle.addRequest{value: paymentForExecution}(
-            CALLBACK_CONTRACT,
-            abi.encodePacked("test"),
-            0,
-            SENDER
+            CALLBACK_CONTRACT, abi.encodePacked("test"), 0, SENDER
         );
 
         vm.roll(12);
@@ -214,46 +159,28 @@ contract OracleTest is Test {
         );
         vm.prank(SENDER);
 
-        oracle.fallbackCall(
-            CALLBACK_CONTRACT,
-            abi.encodePacked("test"),
-            0,
-            SENDER
-        );
+        oracle.fallbackCall(CALLBACK_CONTRACT, abi.encodePacked("test"), 0, SENDER);
 
         assertEq(SENDER.balance, paymentForExecution);
     }
 
     function test_FallbackRevertIfTimoutHasNotPassed() public {
         oracle.addRequest{value: paymentForExecution}(
-            CALLBACK_CONTRACT,
-            abi.encodePacked("test"),
-            0,
-            SENDER
+            CALLBACK_CONTRACT, abi.encodePacked("test"), 0, SENDER
         );
 
         vm.expectRevert();
 
-        oracle.fallbackCall(
-            CALLBACK_CONTRACT,
-            abi.encodePacked("test"),
-            0,
-            SENDER
-        );
+        oracle.fallbackCall(CALLBACK_CONTRACT, abi.encodePacked("test"), 0, SENDER);
     }
 
     function test_FallbackRevertIfNoRequest() public {
         vm.expectRevert();
-        oracle.fallbackCall(
-            CALLBACK_CONTRACT,
-            abi.encodePacked("test"),
-            0,
-            SENDER
-        );
+        oracle.fallbackCall(CALLBACK_CONTRACT, abi.encodePacked("test"), 0, SENDER);
     }
 
     function test_SwapPreview() public {
-        (bool doTransfer, uint reward) = oracle.swapPreview(linkHoldings);
+        (bool doTransfer, uint256 reward) = oracle.swapPreview(linkHoldings);
         assertEq(doTransfer, true);
         assertEq(reward, 63 * 10 ** 13);
     }
@@ -262,7 +189,7 @@ contract OracleTest is Test {
         linkToken.mint(SENDER, linkHoldings);
         vm.prank(SENDER);
         linkToken.approve(address(oracle), linkHoldings);
-        (, uint reward) = oracle.swapPreview(linkHoldings);
+        (, uint256 reward) = oracle.swapPreview(linkHoldings);
         oracle.swap(SENDER, linkHoldings);
         assertEq(SENDER.balance, reward);
     }

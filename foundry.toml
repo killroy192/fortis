@@ -1,13 +1,16 @@
 [profile.default]
+fs_permissions = [{access = "read", path = "lib/foundry-chainlink-toolkit/out"}]
+gas_reports = ["*"]
+libs = ['lib']
+out = 'out'
 solc-version = "0.8.20"
 src = 'src'
 test = 'src/test'
-out = 'out'
-libs = ['lib']
-gas_reports = ["*"]
-optimizer = true
-optimizer_runs = 20000
-fs_permissions = [{ access = "read", path = "lib/foundry-chainlink-toolkit/out"}]
+
+[fmt]
+line_length = 100
+bracket_spacing = false
+wrap_comments = true
 
 # Remappings in remappings.txt
 

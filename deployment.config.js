@@ -1,7 +1,5 @@
 const { dynamicAddress } = require("@dgma/hardhat-sol-bundler");
-const {
-  VerifyPlugin,
-} = require("@dgma/hardhat-sol-bundler/plugins/Verify");
+const { VerifyPlugin } = require("@dgma/hardhat-sol-bundler/plugins/Verify");
 
 const common = {
   AutomationEmitter: {},
@@ -82,10 +80,7 @@ module.exports = {
   hardhat: {
     config: demoConfig,
   },
-  localhost: {
-    lockFile: "./local.deployment-lock.json",
-    config: demoConfig,
-  },
+  localhost: { lockFile: "./local.deployment-lock.json", config: demoConfig },
   "arbitrum-sepolia": {
     lockFile: "./deployment-lock.json",
     verify: true,

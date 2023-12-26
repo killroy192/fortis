@@ -3,10 +3,7 @@ pragma solidity ^0.8.16;
 
 interface IAutomationEmitter {
     event AutomationTrigger(
-        address callbackContract,
-        bytes callbackArgs,
-        uint256 nonce,
-        address sender
+        address callbackContract, bytes callbackArgs, uint256 nonce, address sender
     );
 
     function emitAutomationEvent(

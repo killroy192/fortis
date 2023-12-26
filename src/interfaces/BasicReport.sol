@@ -8,7 +8,8 @@ struct BasicReport {
     uint32 validFromTimestamp;
     // Latest timestamp for which price is applicable
     uint32 observationsTimestamp;
-    // Base cost to validate a transaction using the report, denominated in the chain’s native token (WETH/ETH)
+    // Base cost to validate a transaction using the report, denominated in the chain’s native
+    // token (WETH/ETH)
     uint192 nativeFee;
     // Base cost to validate a transaction using the report, denominated in LINK
     uint192 linkFee;
