@@ -1,7 +1,6 @@
 name: Quality Gate
 on:
   push:
-    branches: [ignore]
 
 env:
   NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -11,6 +10,7 @@ jobs:
     permissions:
       contents: read
       packages: read
+      security-events: write
     steps:
       - name: Checkout
         uses: actions/checkout@v3
