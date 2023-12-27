@@ -1,6 +1,7 @@
 name: Quality Gate
 on:
   push:
+    branches: [ignore]
 
 env:
   NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -16,10 +17,8 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
-          always-auth: true
           cache: "npm"
           node-version: "18.x"
-          registry-url: https://npm.pkg.github.com
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
       - name: Install Dependancies
