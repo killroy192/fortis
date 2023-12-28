@@ -187,10 +187,10 @@ contract OracleTest is Test {
 
     function test_Swap() public {
         linkToken.mint(SENDER, linkHoldings);
-        vm.prank(SENDER);
+        startHoax(SENDER, 0);
         linkToken.approve(address(oracle), linkHoldings);
         (, uint256 reward) = oracle.swapPreview(linkHoldings);
-        oracle.swap(SENDER, linkHoldings);
+        oracle.swap(linkHoldings);
         assertEq(SENDER.balance, reward);
     }
 }

@@ -34,7 +34,7 @@ interface IOracle {
         address sender
     ) external view returns (bytes32, bool, uint256);
 
-    function swap(address sender, uint256 amount) external returns (bool);
+    function swap(uint256 amount) external returns (bool);
 
     function swapPreview(uint256 amount) external view returns (bool, uint256);
 }
