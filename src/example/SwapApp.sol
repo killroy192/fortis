@@ -11,10 +11,12 @@ import {IFakedOracle} from "./fakers/IFakedOracle.sol";
  */
 contract SwapApp is IOracleConsumerContract {
     error UnsuccesfullTradeInititation(TradeParamsStruct tradeParams, uint256 nonce);
+    error NoAccess(address initiator);
+    error FailedSwap(address tokenIn, uint256 amountIn, address tokenOut, uint256 outputAmount);
 
     event Price(uint256 price);
 
-    address public immutable oracle;
+    address public immutable ORACLE;
 
     struct TradeParamsStruct {
         address recipient;
@@ -26,7 +28,14 @@ contract SwapApp is IOracleConsumerContract {
     event TradeExecuted(uint256 tokensAmount, int256 price);
 
     constructor(address _oracle) {
-        oracle = _oracle;
+        ORACLE = _oracle;
+    }
+
+    modifier oracleCallback() {
+        if (msg.sender != ORACLE) {
+            revert NoAccess(msg.sender);
+        }
+        _;
     }
 
     function trade(TradeParamsStruct calldata tradeParams, uint256 nonce)
@@ -34,7 +43,7 @@ contract SwapApp is IOracleConsumerContract {
         payable
         returns (bool)
     {
-        bool success = IOracle(oracle).addRequest{value: msg.value}(
+        bool success = IOracle(ORACLE).addRequest{value: msg.value}(
             address(this), abi.encode(tradeParams), nonce, msg.sender
         );
         if (!success) {
@@ -48,7 +57,7 @@ contract SwapApp is IOracleConsumerContract {
         payable
         returns (bool)
     {
-        bool success = IFakedOracle(oracle).addFakeRequest{value: msg.value}(
+        bool success = IFakedOracle(ORACLE).addFakeRequest{value: msg.value}(
             address(this), abi.encode(tradeParams), nonce, msg.sender
         );
         if (!success) {
@@ -57,7 +66,7 @@ contract SwapApp is IOracleConsumerContract {
         return success;
     }
 
-    function consume(ForwardData calldata forwardData) external returns (bool) {
+    function consume(ForwardData calldata forwardData) external oracleCallback returns (bool) {
         TradeParamsStruct memory tradeParams =
             abi.decode(forwardData.forwardArguments, (TradeParamsStruct));
         uint256 successfullyTradedTokens = _swapTokens(forwardData.price, tradeParams);
@@ -98,11 +107,18 @@ contract SwapApp is IOracleConsumerContract {
 
         uint256 outputAmount = (priceForOneToken * tradeParams.amountIn) / 10 ** inputTokenDecimals;
 
-        IERC20Metadata(tradeParams.tokenIn).transferFrom(
+        bool successCharge = IERC20Metadata(tradeParams.tokenIn).transferFrom(
             tradeParams.recipient, address(this), tradeParams.amountIn
         );
 
-        IERC20Metadata(tradeParams.tokenOut).transfer(tradeParams.recipient, outputAmount);
+        bool successPay =
+            IERC20Metadata(tradeParams.tokenOut).transfer(tradeParams.recipient, outputAmount);
+
+        if (!successCharge || !successPay) {
+            revert FailedSwap(
+                tradeParams.tokenIn, tradeParams.amountIn, tradeParams.tokenOut, outputAmount
+            );
+        }
 
         return outputAmount;
     }
