@@ -70,20 +70,14 @@ make test
 
 ### Deploying
 
-Deploying to a network uses the [hardhat](https://hardhat.org/) custom tasks. Currently project supports deployment to hardhat (deploy-and-kill) network, hardhat localhost and arbitrum-sepolia.
-To deploy fortis oracle  run:
+Project leverage [@dgma/hardhat-sol-bundler](https://www.npmjs.com/package/@dgma/hardhat-sol-bundler) util dor deployment. Find more details for deployment in `deployment.config.js`
+To deploy fortis oracle, run:
 
 ```sh
 make deploy network=arbitrum-sepolia
 ```
 
-To deploy fortis oracle along with demo contracts, run:
-
-```sh
-make deploy-demo network=arbitrum-sepolia
-```
-
-The script will run and deploy only changed contracts. In case you need a fresh deployment, please remove `deployment.lock` file.
+The script will run and deploy only changed contracts. In case you need a fresh deployment, please remove `deployment-lock.js` file.
 In case of new Oracle deployment, you will need to register it with [Chainlink automation log trigger](https://docs.chain.link/chainlink-automation/overview/getting-started#try-out-chainlink-automation).
 After successful registration, you'll need to set Upkeep ID running:
 
@@ -91,7 +85,7 @@ After successful registration, you'll need to set Upkeep ID running:
 # Oracle without demo modules
 make onRegister network=arbitrum-sepolia id={your_upkeep_id} oracle=Oracle
 # Oracle for demo 
-make onRegister-demo network=arbitrum-sepolia id={your_upkeep_id}
+make onRegister network=arbitrum-sepolia id={your_upkeep_id} oracle=FakedOracle
 ```
 
 ### Useful commands
@@ -102,7 +96,7 @@ To fund oracle with LINK tokens in exchange for collected ETH, run:
 # Oracle without demo modules
 make refund network=arbitrum-sepolia amount={link_tokens} oracle=Oracle
 # Oracle for demo 
-make refund-demo network=arbitrum-sepolia amount={link_tokens}
+make refund network=arbitrum-sepolia amount={link_tokens} oracle=FakedOracle
 ```
 
 To trade ETH\fUSDC with [SwapAPP](https://github.com/killroy192/fortis/blob/main/src/example/SwapApp.sol), run:

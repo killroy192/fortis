@@ -2,7 +2,7 @@
 
 .PHONY: all test clean deploy-anvil
 
-all: clean install forge-build hh-build test
+all: clean install test
 
 # Clean the repo
 clean :; forge clean
@@ -11,26 +11,22 @@ clean :; forge clean
 install :; rm -rf lib && forge install --no-commit --no-git foundry-rs/forge-std && npm i && npx husky install
 
 # CI installation
-install-ci :; touch .env; forge install --no-commit --no-git foundry-rs/forge-std; npm ci
+install-ci :; touch .env; forge install --no-commit --no-git foundry-rs/forge-std && npm ci
 
 # Update Dependencies
 forge-update:; forge update
 
-forge-build:; forge build
+compile :; npx hardhat compile
 
-hh-build :; npx hardhat compile
-
-test :; forge test -vvv
+test :; forge test -vvv; npx hardhat test
 
 snapshot :; forge snapshot
 
-slither :; slither ./src 
-
-format :; npx prettier --write src/**/*.sol
+format :; forge fmt src/; forge fmt test/
 
 lint :; npx solhint src/**/*.sol
 
-hh-node :; npx hardhat node
+node :; npx hardhat node
 
 network?=hardhat
 
