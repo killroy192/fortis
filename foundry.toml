@@ -1,5 +1,4 @@
 [profile.default]
-fs_permissions = [{access = "read", path = "lib/foundry-chainlink-toolkit/out"}]
 gas_reports = ["*"]
 libs = ['lib']
 out = 'out'

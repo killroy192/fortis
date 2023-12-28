@@ -2,36 +2,46 @@ name: Quality Gate
 on:
   push:
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: read
 
 jobs:
-  build_and_validate:
+  lint:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: read
-      security-events: write
     steps:
       - uses: actions/checkout@v4
-      - name: Set up environment
-        uses: ./.github/actions/setup
-      - name: code quality
-        run: make lint
-      - name: Run harhat compilation
-        run: make compile
-      - name: Run unit tests
-        run: make test
-      - name: Run demo deployment
-        run: make deploy
-      - name: Run Slither
-        uses: crytic/slither-action@v0.3.0
-        id: slither
+      - uses: ./.github/actions/setup
+      - run: make lint
+
+  check-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: make compile
+      - run: make deploy
+
+  test:
+    needs: check-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+      - run: make test
+
+  slither:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: rm foundry.toml
+      - uses: crytic/slither-action@v0.3.0
         with:
-          target: 'src/'
-          sarif: results.sarif
-          fail-on: none
-          ignore-compile: true
-      - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: ${{ steps.slither.outputs.sarif }}
+          node-version: 18.15
