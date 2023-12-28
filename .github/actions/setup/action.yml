@@ -1,0 +1,24 @@
+name: Setup
+description: Install and cache npm and node_modules to reuse them in workflows and jobs
+inputs:
+  foundry:
+    description: "Boolean to flag foundry installation"
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v3
+      with:
+        cache: "npm"
+        node-version: 18.x
+    - uses: actions/cache@v3
+      id: cache
+      with:
+        path: '**/node_modules'
+        key: ${{ runner.os }}-node_modules-${{ hashFiles('**/package-lock.json') }}
+    - run: make install-ci
+      shell: bash
+      if: steps.cache.outputs.cache-hit != 'true'
+    - name: Install Foundry
+      if: ${{ inputs.foundry }}
+      uses: foundry-rs/foundry-toolchain@v1

@@ -1,11 +1,10 @@
 [profile.default]
-fs_permissions = [{access = "read", path = "lib/foundry-chainlink-toolkit/out"}]
 gas_reports = ["*"]
 libs = ['lib']
 out = 'out'
 solc-version = "0.8.20"
 src = 'src'
-test = 'src/test'
+test = 'test'
 
 [fmt]
 line_length = 100

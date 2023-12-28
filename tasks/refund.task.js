@@ -28,7 +28,7 @@ async function refund(oracleContractName, linkToSpend, hre) {
   console.log("swapPreview", resp);
   if (resp[0]) {
     await linkToken.approve(lock[oracleContractName].address, amount);
-    await oracle.swap(await signer.getAddress(), amount);
+    await oracle.swap(amount);
     console.log("done");
   } else {
     console.log("cant swap, not enough eth in treasure");

@@ -24,8 +24,8 @@ module.exports = {
     },
   },
   paths: {
-    sources: "./src",
-    tests: "./integration",
+    sources: "src",
+    tests: "test",
   },
   networks: {
     hardhat: {

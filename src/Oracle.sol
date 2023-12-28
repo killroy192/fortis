@@ -211,14 +211,12 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         return (id, executable, reqStats.executionFee);
     }
 
-    /**
-     * @notice uses LINK's transferAndCall to LINK and add funding to an upkeep
-     */
-    function swap(address sender, uint256 amount) external nonReentrant returns (bool) {
+    // todo: rewrate to LINK transferAndCall
+    function swap(uint256 amount) external nonReentrant returns (bool) {
         (bool doTransfer, uint256 reward) = swapPreview(amount);
 
         if (doTransfer) {
-            bool success = link.transferFrom(sender, address(this), amount);
+            bool success = link.transferFrom(msg.sender, address(this), amount);
 
             if (!success) revert FailedLinkTransfer();
 
@@ -226,7 +224,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
 
             IAutomationRegistryConsumer(registry).addFunds(meta.id, SafeCast.toUint96(amount));
 
-            (bool rewardingSuccess,) = payable(sender).call{value: reward}("");
+            (bool rewardingSuccess,) = payable(msg.sender).call{value: reward}("");
             return rewardingSuccess;
         }
         return doTransfer;
