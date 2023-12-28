@@ -23,6 +23,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+        with:
+          foundry: true
       - run: make compile
       - run: make deploy
 
@@ -32,8 +34,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          foundry: true
       - run: make test
 
   slither:

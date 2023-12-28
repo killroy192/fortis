@@ -1,5 +1,8 @@
 name: Setup
 description: Install and cache npm and node_modules to reuse them in workflows and jobs
+inputs:
+  foundry:
+    description: "Boolean to flag foundry installation"
 
 runs:
   using: composite
@@ -16,3 +19,6 @@ runs:
     - run: make install-ci
       shell: bash
       if: steps.cache.outputs.cache-hit != 'true'
+    - name: Install Foundry
+      if: ${{ inputs.foundry }}
+      uses: foundry-rs/foundry-toolchain@v1
