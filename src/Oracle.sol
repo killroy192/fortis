@@ -3,20 +3,20 @@ pragma solidity ^0.8.16;
 
 import {Log} from "@chainlink/contracts/src/v0.8/automation/interfaces/ILogAutomation.sol";
 import {AggregatorV3Interface} from
-    "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+"@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {LinkTokenInterface} from
-    "@chainlink/contracts/src/v0.8/shared/interfaces/LinkTokenInterface.sol";
+"@chainlink/contracts/src/v0.8/shared/interfaces/LinkTokenInterface.sol";
 import {IAutomationRegistryConsumer} from
-    "@chainlink/contracts/src/v0.8/automation/interfaces/IAutomationRegistryConsumer.sol";
+"@chainlink/contracts/src/v0.8/automation/interfaces/IAutomationRegistryConsumer.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
 import {IOracle} from "./interfaces/IOracle.sol";
 import {
-    IOracleConsumerContract,
-    ForwardData,
-    FeedType
+IOracleConsumerContract,
+ForwardData,
+FeedType
 } from "./interfaces/IOracleCallBackContract.sol";
 import {IAutomationEmitter} from "./interfaces/IAutomationEmitter.sol";
 import {BasicReport} from "./interfaces/BasicReport.sol";
@@ -122,13 +122,13 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         // Decode the performData bytes passed in by CL Automation.
         // This contains the data returned by your implementation in checkCallback().
         (bytes[] memory signedReports, bytes memory extraData) =
-            abi.decode(performData, (bytes[], bytes));
+                            abi.decode(performData, (bytes[], bytes));
 
         (address callbackContract, bytes memory callbackArgs, uint256 nonce, address sender) =
-            abi.decode(extraData, (address, bytes, uint256, address));
+                            abi.decode(extraData, (address, bytes, uint256, address));
 
         (bytes32 id, RequestLib.RequestStats memory reqStats) =
-            getRequestProps(callbackContract, callbackArgs, nonce, sender);
+                        getRequestProps(callbackContract, callbackArgs, nonce, sender);
 
         // prevent duplicated request execution
         if (reqStats.status != RequestLib.RequestStatus.Pending) {
@@ -163,7 +163,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         address sender
     ) external nonReentrant returns (bool) {
         (bytes32 id, bool executable, uint256 reward) =
-            previewFallbackCall(callbackContract, callbackArgs, nonce, sender);
+                        previewFallbackCall(callbackContract, callbackArgs, nonce, sender);
 
         if (!executable) {
             revert InvalidRequestsExecution(id);
@@ -203,7 +203,7 @@ contract Oracle is IOracle, DataStreamConsumer, ReentrancyGuard {
         address sender
     ) public view returns (bytes32, bool, uint256) {
         (bytes32 id, RequestLib.RequestStats memory reqStats) =
-            getRequestProps(callbackContract, callbackArgs, nonce, sender);
+                        getRequestProps(callbackContract, callbackArgs, nonce, sender);
 
         bool executable = reqStats.status == RequestLib.RequestStatus.Pending
             && reqStats.blockNumber + requestTimeout <= block.number;
