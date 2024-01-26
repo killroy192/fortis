@@ -15,10 +15,7 @@
     "url": "https://github.com/killroy192/fortis-sdk/issues"
   },
   "dependencies": {
-    "@chainlink/contracts": "^0.8.0",
-    "@openzeppelin/contracts": "^5.0.0",
-    "@uniswap/v3-periphery": "^1.4.4",
-    "hardhat-abi-exporter": "^2.10.1"
+    "@openzeppelin/contracts": "^5.0.1"
   },
   "devDependencies": {
     "@dgma/hardhat-sol-bundler": "^0.3.4",
@@ -29,14 +26,13 @@
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@nomicfoundation/hardhat-verify": "^2.0.3",
     "@types/chai": "^4.3.11",
-    "@types/mocha": ">=9.1.0",
-    "dotenv": "^16.3.1",
+    "@types/mocha": ">=10.0.6",
+    "dotenv": "^16.4.1",
     "ethers": "^6.10.0",
     "hardhat": "^2.19.4",
-    "hardhat-gas-reporter": "^1.0.9",
-    "husky": "^8.0.3",
+    "husky": "^9.0.6",
     "lint-staged": "^15.2.0",
-    "prettier": "^3.2.2",
+    "prettier": "^3.2.4",
     "solhint": "^4.1.1",
     "solidity-coverage": "^0.8.5"
   }

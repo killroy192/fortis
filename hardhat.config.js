@@ -3,7 +3,6 @@ const config = require("dotenv").config();
 require("@nomicfoundation/hardhat-foundry");
 require("@nomicfoundation/hardhat-toolbox");
 require("@dgma/hardhat-sol-bundler");
-require("./tasks");
 const { ZeroHash } = require("ethers");
 const deployments = require("./deployment.config");
 

@@ -32,17 +32,4 @@ network?=hardhat
 
 deploy :; npx hardhat --network $(network) deploy-bundle
 
-amount?=1
-oracle?=Oracle
-
-refund :; npx hardhat --network $(network) refund --amount $(amount) --oracle $(oracle)
-
-onRegister :; npx hardhat --network $(network) onRegister --id $(id) --oracle $(oracle)
-
-eth?=0.001
-
-trade-demo :;  npx hardhat --network $(network) demo:trade --amount $(eth)
-
-migrate-demo :; npx hardhat --network $(network) demo:migrate
-
 -include ${FCT_PLUGIN_PATH}/makefile-external
