@@ -1,18 +1,15 @@
 {
-  "name": "fortis-oracle",
-  "version": "0.0.3",
-  "description": "Easy to integrate and powerful Oracle on top of Chainlink Data Streams and Chainlink Data Feeds.",
-  "author": "Dzmitry Lahunouski, Dzianis Roi, Tikhon Scherbakov",
+  "name": "sol-starter",
+  "version": "0.0.1",
+  "description": "Template to bootstrap solidity project with foundry and hardhat",
+  "author": "Dogma Labs",
   "license": "MIT",
-  "files": [
-    "src/**/*.sol"
-  ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/killroy192/fortis-sdk.git"
+    "url": "git+https://github.com:dgma/sol-starter.git"
   },
   "bugs": {
-    "url": "https://github.com/killroy192/fortis-sdk/issues"
+    "url": "https://github.com:dgma/sol-starter/issues"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.1"
