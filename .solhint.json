@@ -4,16 +4,10 @@
     "avoid-throw": "off",
     "avoid-suicide": "error",
     "avoid-sha3": "warn",
-    "compiler-version": [
-      "error",
-      ">=0.8.0 <0.9.0"
-    ],
+    "compiler-version": ["error", ">=0.8.0 <0.9.0"],
     "func-name-mixedcase": "off",
     "var-name-mixedcase": "off",
-    "code-complexity": [
-      "error",
-      8
-    ],
+    "code-complexity": ["error", 8],
     "constructor-syntax": "error",
     "func-visibility": [
       "error",
@@ -21,10 +15,7 @@
         "ignoreConstructors": true
       }
     ],
-    "max-line-length": [
-      "error",
-      105
-    ],
+    "max-line-length": ["error", 100],
     "not-rely-on-time": "off",
     "reason-string": [
       "warn",

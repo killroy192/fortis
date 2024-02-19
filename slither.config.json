@@ -4,6 +4,7 @@
   "solc_remaps": [
     "@std=lib/forge-std/src/",
     "forge-std/=lib/forge-std/src/",
-    "@openzeppelin/=node_modules/@openzeppelin/"
+    "@openzeppelin/=node_modules/@openzeppelin/",
+    "src=src/"
   ]
 }

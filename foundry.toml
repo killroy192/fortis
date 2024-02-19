@@ -6,9 +6,17 @@ solc-version = "0.8.20"
 src = 'src'
 test = 'test'
 
+remappings = [
+  '@std=lib/forge-std/src/',
+  'forge-std/=lib/forge-std/src/',
+  '@openzeppelin/=node_modules/@openzeppelin/',
+  'src=src/'
+]
+
 [fmt]
-line_length = 100
 bracket_spacing = false
+line_length = 100
+tab_width = 4
 wrap_comments = true
 
 # Remappings in remappings.txt

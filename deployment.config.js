@@ -1,7 +1,7 @@
 const { VerifyPlugin } = require("@dgma/hardhat-sol-bundler/plugins/Verify");
 
 const config = {
-  Template: {}
+  Template: {},
 };
 
 module.exports = {
