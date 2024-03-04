@@ -1,6 +1,6 @@
 {
   "name": "sol-starter",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Template to bootstrap solidity project with foundry and hardhat",
   "author": "Dogma Labs",
   "license": "MIT",
@@ -12,25 +12,25 @@
     "url": "https://github.com:dgma/sol-starter/issues"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.0.1"
+    "@openzeppelin/contracts": "^5.0.2"
   },
   "devDependencies": {
-    "@dgma/hardhat-sol-bundler": "^0.3.4",
+    "@dgma/hardhat-sol-bundler": "^0.5.4",
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.6",
     "@nomicfoundation/hardhat-ethers": "^3.0.5",
     "@nomicfoundation/hardhat-foundry": "^1.1.1",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.10",
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@nomicfoundation/hardhat-verify": "^2.0.4",
-    "@types/chai": "^4.3.11",
+    "@types/chai": "^4.3.12",
     "@types/mocha": ">=10.0.6",
-    "dotenv": "^16.4.4",
+    "dotenv": "^16.4.5",
     "ethers": "^6.11.1",
-    "hardhat": "^2.20.1",
+    "hardhat": "^2.21.0",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.2",
     "prettier": "^3.2.5",
     "solhint": "^4.1.1",
-    "solidity-coverage": "^0.8.7"
+    "solidity-coverage": "^0.8.10"
   }
 }
